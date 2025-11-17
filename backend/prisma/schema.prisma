@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WorkstationColorSettings {
+  id       String @id @default(cuid())
+  settings Json // JSON с цветами
+
+  @@map("workstation_color_settings")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  role       UserRole
+  firstName  String
+  lastName   String
+  middleName String
+  email      String   @unique
+  password   String
+
+  // Relations
+  bookings Booking[]
+  payments Payment[]
+
+  @@map("users")
+}
+
+model CoworkingCenter {
+  id          String        @id @default(cuid())
+  address     String
+  latitude    Float
+  longitude   Float
+  isActive    Boolean       @default(true)
+  phone       String?
+  email       String?
+  openingTime String
+  closingTime String
+  amenities   AmenityType[]
+
+  // Relations
+  floors   Floor[]
+  bookings Booking[]
+
+  @@map("coworking_centers")
+}
+
+model Floor {
+  id                String @id @default(cuid())
+  level             Int
+  width             Int
+  height            Int
+  coworkingCenterId String
+
+  // Relations
+  coworkingCenter CoworkingCenter @relation(fields: [coworkingCenterId], references: [id], onDelete: Cascade)
+  workstations    Workstation[]
+  landmarks       Landmark[]
+
+  @@map("floors")
+}
+
+model Landmark {
+  id       String       @id @default(cuid())
+  floorId  String
+  type     LandmarkType
+  x        Int
+  y        Int
+  name     String?
+  rotation Int          @default(0)
+
+  // Relations
+  floor Floor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@map("landmarks")
+}
+
+model Workstation {
+  id                String          @id @default(cuid())
+  number            Int
+  floorId           String
+  type              WorkstationType
+  capacity          Int
+  basePricePerHour  Float? // Для почасовой оплаты
+  basePricePerDay   Float? // Для дневной оплаты
+  basePricePerWeek  Float? // Для недельной оплаты
+  basePricePerMonth Float? // Для месячной оплаты
+  x                 Int
+  y                 Int
+  width             Int
+  height            Int
+
+  // Relations
+  floor     Floor           @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  bookings  Booking[]
+  inventory InventoryItem[]
+
+  // Уникальный номер в пределах этажа
+  @@unique([number, floorId])
+  @@map("workstations")
+}
+
+model InventoryItem {
+  id               String        @id @default(cuid())
+  workstationId    String? // Сделать необязательным
+  type             InventoryType
+  description      String?
+  totalQuantity    Int           @default(1) // Общее количество в группе
+  reservedQuantity Int           @default(0) // Занятое количество
+
+  // Relations
+  workstation Workstation? @relation(fields: [workstationId], references: [id], onDelete: Cascade) // Сделать необязательным
+
+  @@map("inventory_items")
+}
+
+model Booking {
+  id                String        @id @default(cuid())
+  userId            String
+  coworkingCenterId String
+  workstationId     String
+  startTime         DateTime
+  endTime           DateTime
+  paymentId         String        @unique
+  status            BookingStatus @default(ACTIVE)
+
+  // Relations
+  user            User            @relation(fields: [userId], references: [id])
+  coworkingCenter CoworkingCenter @relation(fields: [coworkingCenterId], references: [id])
+  workstation     Workstation     @relation(fields: [workstationId], references: [id])
+  payment         Payment         @relation(fields: [paymentId], references: [id])
+
+  @@map("bookings")
+}
+
+model Discount {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  percentage        Float
+  maxDiscountAmount Float?
+  usageLimit        Int?
+  startDate         DateTime
+  endDate           DateTime
+  applicableDays    String[] // ["monday", "tuesday", "wednesday", ...]
+  applicableHours   String? // "09:00-18:00" или пустая строка для всего дня
+  isActive          Boolean  @default(true)
+  priority          Int      @default(0)
+
+  @@map("discounts")
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  userId             String
+  basePrice          Float
+  discountPercentage Float?        @default(0)
+  finalPrice         Float
+  currency           String        @default("RUB")
+  refundAmount       Float?
+  status             PaymentStatus @default(COMPLETED)
+
+  // Связи
+  user    User     @relation(fields: [userId], references: [id])
+  Booking Booking?
+
+  @@map("payments")
+}
+
+enum UserRole {
+  CLIENT
+  ADMIN
+  MANAGER
+}
+
+enum WorkstationType {
+  DESK
+  COMPUTER_DESK
+  MEETING_ROOM
+  CONFERENCE_ROOM
+}
+
+enum LandmarkType {
+  ENTRANCE
+  TOILET
+}
+
+enum InventoryType {
+  MONITOR
+  PROJECTOR
+  WHITEBOARD
+  MICROPHONE
+  SPEAKERS
+  TABLE
+  LAPTOP
+}
+
+enum AmenityType {
+  WIFI
+  PARKING
+  COFFEE
+  TEA
+  SNACKS
+  LOCKERS
+}
+
+enum BookingStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  COMPLETED
+  REFUNDED
+}

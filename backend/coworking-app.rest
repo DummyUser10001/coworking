@@ -1,0 +1,57 @@
+### GET /
+GET http://localhost:3000
+
+### Register a user POST /AUTH/REGISTER
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "email": "gamesh@gmail.com", 
+    "password": "123123123",
+    "lastName": "Иванов",
+    "firstName": "Иван",
+    "middleName": "Иванович"
+}
+
+### Login a user POST /AUTH/LOGIN
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "gilgamesh@gmail.com",
+    "password": "123123123"
+}
+
+### Fetch all todos GET /TODOS (protected)
+GET http://localhost:3000/bookings
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzMxOTA2NDE3LCJleHAiOjE3MzE5OTI4MTd9.0vg4uoLjN2K-G5rR7Nogbq1wcEUMsNJ-CtClsYdLFaM
+
+### Creates a new todo POST /BOOKINGS (protected)
+POST http://localhost:3000/bookings
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzMxOTA2NDE3LCJleHAiOjE3MzE5OTI4MTd9.0vg4uoLjN2K-G5rR7Nogbq1wcEUMsNJ-CtClsYdLFaM
+Content-Type: application/json
+
+{
+    "userId": "user_556677",
+    "coworkingCenterId": "cowork_889900",
+    "workstationId": "ws_112233",
+    "startTime": "2024-11-16T14:00:00Z",
+    "endTime": "2024-11-16T20:00:00Z",
+    "basePrice": 1800.00,
+    "discountPercentage": 25.5,
+    "currency": "RUB",
+    "status": "ACTIVE"
+}
+
+### Update a todo PUT /BOOKINGS/:ID (protected) 
+PUT http://localhost:3000/bookings/2?page=4
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzMxOTA2NDE3LCJleHAiOjE3MzE5OTI4MTd9.0vg4uoLjN2K-G5rR7Nogbq1wcEUMsNJ-CtClsYdLFaM
+Content-Type: application/json
+
+{
+    "status": "COMPLETED"
+}
+
+### Delete a todo DELETE /BOOKINGS/:ID (protected)
+DELETE http://localhost:3000/bookings/2
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzMxOTA2NDE3LCJleHAiOjE3MzE5OTI4MTd9.0vg4uoLjN2K-G5rR7Nogbq1wcEUMsNJ-CtClsYdLFaM
