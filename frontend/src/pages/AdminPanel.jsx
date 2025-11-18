@@ -81,7 +81,7 @@ const AdminPanel = () => {
             Панель администратора
           </h1>
           <p className="text-gray-600 dark:text-gray-300 text-lg">
-            Общая статистика и аналитика системы
+            Общая статистика
           </p>
         </div>
 

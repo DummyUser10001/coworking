@@ -94,7 +94,19 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
   const [locationSelected, setLocationSelected] = useState(false)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
+  // Состояния для всплывающих окон
+  const [showAlert, setShowAlert] = useState(false)
+  const [alertMessage, setAlertMessage] = useState('')
+  const [alertType, setAlertType] = useState('info') // 'info', 'warning'
+
   const availableAmenities = getAllAmenities()
+
+  // Функции для работы со всплывающими окнами
+  const showAlertMessage = (message, type = 'info') => {
+    setAlertMessage(message)
+    setAlertType(type)
+    setShowAlert(true)
+  }
 
   useEffect(() => {
     if (editingSpace) {
@@ -150,7 +162,7 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
     // Показываем уведомление, если адрес не найден
     if (!resolvedAddress) {
       setTimeout(() => {
-        alert('Не удалось автоматически определить адрес. Пожалуйста, введите его вручную.')
+        showAlertMessage('Не удалось автоматически определить адрес. Пожалуйста, введите его вручную.', 'warning')
       }, 500)
     }
   }
@@ -168,11 +180,11 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!locationSelected && !editingSpace) {
-      alert('Пожалуйста, выберите местоположение на карте')
+      showAlertMessage('Пожалуйста, выберите местоположение на карте', 'warning')
       return
     }
     if (!formData.address.trim()) {
-      alert('Пожалуйста, введите адрес')
+      showAlertMessage('Пожалуйста, введите адрес', 'warning')
       return
     }
     onSave(formData)
@@ -191,7 +203,7 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
   return (
     <>
       {/* Основное модальное окно */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold text-gray-800 dark:text-white">
@@ -218,9 +230,6 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
                 placeholder="г. Уфа, ул. Примерная, 123"
                 required
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Выберите местоположение на карте для автоматического определения адреса
-              </p>
             </div>
 
             <div>
@@ -238,20 +247,17 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
                   'Определение адреса...'
                 ) : locationSelected ? (
                   <>
-                    ✅ Местоположение выбрано
+                    Местоположение выбрано
                     <br />
-                    <span className="text-xs opacity-90">
-                      Широта: {formData.latitude.toFixed(6)}, Долгота: {formData.longitude.toFixed(6)}
-                    </span>
                   </>
                 ) : (
-                  '📍 Выбрать местоположение на карте'
+                  'Выбрать местоположение на карте'
                 )}
               </button>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {locationSelected 
                   ? 'Местоположение установлено. Нажмите для изменения'
-                  : 'Нажмите чтобы выбрать местоположение на карте. Адрес определится автоматически'
+                  : 'Нажмите для выбора местоположения на карте'
                 }
               </p>
             </div>
@@ -353,7 +359,7 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+                className="flex-1 py-3 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
               >
                 Отмена
               </button>
@@ -364,7 +370,7 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
 
       {/* Модальное окно с картой - должно быть под основным окном */}
       {showMap && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-60 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-4xl h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-800 dark:text-white">
@@ -379,11 +385,11 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
             </div>
             
             <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Кликните на карте в нужном месте. Адрес определится автоматически.
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Нажмите на карту, чтобы выбрать местоположение коворкинг-центра
               </p>
               {locationSelected && (
-                <p className="text-sm font-semibold text-green-600 dark:text-green-400 mt-1">
+                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
                   Текущие координаты: Широта: {formData.latitude.toFixed(6)}, Долгота: {formData.longitude.toFixed(6)}
                 </p>
               )}
@@ -414,6 +420,47 @@ const CoworkingModal = ({ isOpen, onClose, onSave, editingSpace = null }) => {
                 className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-all"
               >
                 Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Всплывающее окно для уведомлений */}
+      {showAlert && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-70 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-auto animate-in fade-in zoom-in duration-200">
+            <div className="text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                alertType === 'warning' 
+                  ? 'bg-yellow-100 dark:bg-yellow-900' 
+                  : 'bg-blue-100 dark:bg-blue-900'
+              }`}>
+                {alertType === 'warning' ? (
+                  <svg className="w-10 h-10 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                )}
+              </div>
+              <h3 className={`text-2xl font-bold mb-3 ${
+                alertType === 'warning' 
+                  ? 'text-yellow-800 dark:text-yellow-300'
+                  : 'text-blue-800 dark:text-blue-300'
+              }`}>
+                {alertType === 'warning' ? 'Внимание!' : 'Информация'}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                {alertMessage}
+              </p>
+              <button
+                onClick={() => setShowAlert(false)}
+                className="w-full py-4 bg-[#645391] hover:bg-[#52447a] text-white rounded-xl font-semibold text-lg transition-all duration-300"
+              >
+                Понятно
               </button>
             </div>
           </div>

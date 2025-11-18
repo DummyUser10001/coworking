@@ -1,6 +1,6 @@
 // frontend\src\components\workspace_booking\WorkspacePlan.jsx
 import React from 'react'
-import assets from '../../assets/assets'
+import { ImArrowRight } from "react-icons/im";
 
 const WorkspacePlan = ({
   floor,
@@ -74,18 +74,9 @@ const WorkspacePlan = ({
   const totalWorkstations = workstations.length
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
       <div className="mb-4 text-center">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Этаж {floor.level}</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Размер: {width} × {height}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Свободно: {availableWorkstations.length} из {totalWorkstations}
-        </p>
-        {selectedDate && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            На дату: {selectedDate.toLocaleDateString('ru-RU')}
-          </p>
-        )}
       </div>
 
       {/* Внутри основного grid-контейнера */}
@@ -143,10 +134,8 @@ const WorkspacePlan = ({
                   {landmark && (
                     <div className="w-10 h-10 rounded flex items-center justify-center cursor-default">
                       {landmark.type === 'ENTRANCE' ? (
-                        <img
-                          src={assets.right_arrow_icon}
-                          alt="entrance"
-                          className="w-6 h-6"
+                        <ImArrowRight 
+                          className="w-6 h-6 text-green-600 dark:text-green-400"
                           style={{ transform: `rotate(${landmark.rotation || 0}deg)` }}
                         />
                       ) : (
@@ -203,7 +192,7 @@ const WorkspacePlan = ({
       </div>
 
       {/* ЛЕГЕНДА */}
-      <div className="mt-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+      <div className="mt-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
         <h4 className="font-semibold text-gray-800 dark:text-white mb-3 text-center">
           Обозначения:
         </h4>
@@ -231,7 +220,7 @@ const WorkspacePlan = ({
           <div className="space-y-3">
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <img src={assets.right_arrow_icon} alt="Вход" className="w-4 h-4" />
+                <ImArrowRight className="w-4 h-4 text-green-600 dark:text-green-400" />
                 <span className="text-sm text-gray-600 dark:text-gray-300">Вход/выход</span>
               </div>
               <div className="flex items-center space-x-2">
@@ -250,16 +239,7 @@ const WorkspacePlan = ({
         </div>
       </div>
 
-      {!customLegend && (
-        <div className="text-center mt-4">
-          <p className="text-gray-500 dark:text-gray-400">
-            Нажмите на свободное место для бронирования
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            Переговорные и конференц-залы выделяются красным только при полной занятости на день
-          </p>
-        </div>
-      )}
+
     </div>
   )
 }

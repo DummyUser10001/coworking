@@ -2,7 +2,7 @@ import React from 'react'
 
 const FloorSelector = ({ floors, currentFloorIndex, onFloorSelect, className = '' }) => {
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 ${className}`}>
+    <div>
       <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3 text-center">
         Выберите этаж
       </h3>

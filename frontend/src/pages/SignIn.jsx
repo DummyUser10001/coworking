@@ -17,7 +17,7 @@ const SignIn = ({ theme, setTheme }) => {
 
     try {
       const data = await loginUser({ email, password })
-      login(data.token) // Используем контекст вместо localStorage
+      await login(data.token)  // ← ДОБАВИТЬ await !!!
       navigate('/profile')
     } catch (err) {
       setError('Ошибка входа: ' + err.message)
@@ -32,9 +32,6 @@ const SignIn = ({ theme, setTheme }) => {
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
               Вход в аккаунт
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Войдите в свой аккаунт CoworkingSpace
-            </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 transition-all duration-300">
@@ -65,21 +62,6 @@ const SignIn = ({ theme, setTheme }) => {
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] focus:border-transparent transition-all text-gray-800 dark:text-white cursor-text"
                   placeholder="••••••••"
                 />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 text-[#645391] bg-gray-100 border-gray-300 rounded focus:ring-[#645391] focus:ring-2 cursor-pointer"
-                  />
-                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                    Запомнить меня
-                  </span>
-                </label>
-                <a href="#" className="text-sm text-[#645391] dark:text-[#A1E1DE] hover:underline cursor-pointer">
-                  Забыли пароль?
-                </a>
               </div>
 
               {error && (

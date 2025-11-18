@@ -1,25 +1,26 @@
 // frontend\src\components\Features.jsx
 import React from 'react'
+import { MdRocketLaunch, MdComputer, MdCoffee, MdGroups } from 'react-icons/md'
 
 const Features = ({ theme }) => {
   const features = [
     {
-      icon: '🚀',
+      icon: <MdRocketLaunch className="w-8 h-8 text-[#645391] dark:text-[#A1E1DE]" />,
       title: 'Быстрое бронирование',
-      description: 'Забронируйте место за 2 минуты через удобный интерфейс'
+      description: 'Забронируйте место за пару минут через удобный интерфейс'
     },
     {
-      icon: '💻',
+      icon: <MdComputer className="w-8 h-8 text-[#645391] dark:text-[#A1E1DE]" />,
       title: 'Современное оборудование',
       description: 'Высокоскоростной интернет, мониторы и удобная мебель'
     },
     {
-      icon: '☕',
+      icon: <MdCoffee className="w-8 h-8 text-[#645391] dark:text-[#A1E1DE]" />,
       title: 'Кофе и закуски',
-      description: 'Бесплатный кофе, чай и легкие закуски throughout the day'
+      description: 'Бесплатный кофе, чай и легкие закуски весь день'
     },
     {
-      icon: '🤝',
+      icon: <MdGroups className="w-8 h-8 text-[#645391] dark:text-[#A1E1DE]" />,
       title: 'Нетворкинг',
       description: 'Знакомьтесь с единомышленниками и расширяйте связи'
     }

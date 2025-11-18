@@ -32,7 +32,7 @@ const SignUp = ({ theme, setTheme }) => {
 
     try {
       const data = await registerUser(form)
-      login(data.token) // Используем контекст вместо localStorage
+      await login(data.token)  // ← И ТУТ ТОЖЕ await !!!
       navigate('/profile')
     } catch (err) {
       setError('Ошибка регистрации: ' + err.message)
@@ -47,9 +47,6 @@ const SignUp = ({ theme, setTheme }) => {
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
               Регистрация
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Создайте аккаунт в CoworkingSpace
-            </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 transition-all duration-300">

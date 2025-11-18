@@ -224,46 +224,6 @@ const CalendarPanel = ({
           </div>
         )}
 
-      {/* Подтверждение выбранной даты/времени */}
-      {selectedDate && (
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
-          <p className="text-sm text-blue-700 dark:text-blue-200 font-medium">
-            Выбрано:{' '}
-            {selectedDate.toLocaleDateString('ru-RU', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-          {selectedTime && (
-            <p className="text-sm text-blue-700 dark:text-blue-200">
-              Время: {selectedTime}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Легенда */}
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-[#645391] rounded"></div>
-          <span className="dark:text-gray-300">Выбранная дата</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-blue-100 dark:bg-blue-900 rounded"></div>
-          <span className="dark:text-gray-300">Сегодня</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-red-500 rounded"></div>
-          <span className="dark:text-gray-300">Занятое время</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded"></div>
-          <span className="dark:text-gray-300">Прошедшее время</span>
-        </div>
-      </div>
-
       {/* Часы работы */}
       <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <p className="text-xs text-gray-600 dark:text-gray-300 text-center">

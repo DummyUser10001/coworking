@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import assets from '../../assets/assets'
+import { ImArrowRight } from "react-icons/im"
 
 const FloorGrid = ({
   floor,
@@ -303,17 +303,14 @@ const handleCellClick = (x, y, event) => {
                     onClick={(e) => { e.stopPropagation(); onLandmarkClick(landmark) }}
                   >
                     {landmark.type === 'ENTRANCE' ? (
-                      <img
-                        src={assets.right_arrow_icon}
-                        alt="entrance"
-                        className="w-6 h-6"
+                      <ImArrowRight 
+                        className="w-6 h-6 text-green-600 dark:text-green-400"
                         style={{ transform: `rotate(${landmark.rotation || 0}deg)` }}
                       />
                     ) : (
-// Вариант 2 - темно-желтый фон
-<div className="w-7 h-7 bg-yellow-600 rounded-full flex items-center justify-center shadow-md">
-  <span className="text-[10px] font-black text-white tracking-tight">WC</span>
-</div>
+                      <div className="w-7 h-7 bg-yellow-600 rounded-full flex items-center justify-center shadow-md">
+                        <span className="text-[10px] font-black text-white tracking-tight">WC</span>
+                      </div>
                     )}
                   </div>
                 )}

@@ -1,22 +1,25 @@
 import React, { useState } from 'react'
-import { createBooking } from '../../api/booking' // ИСПРАВЛЕННЫЙ ИМПОРТ
+import { createBooking } from '../../api/booking'
+import { useAuth } from '../../context/AuthContext'
 
 const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => {
+  const { token } = useAuth()
   const [cardNumber, setCardNumber] = useState('')
+  const [maskedCardNumber, setMaskedCardNumber] = useState('')
+
   const [expiryDate, setExpiryDate] = useState('')
+
   const [cvc, setCvc] = useState('')
+  const [maskedCvc, setMaskedCvc] = useState('')
+
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
 
   if (!isOpen || !bookingDetails) return null
 
-  // Форматирование карты
-  const formatCardNumber = (v) => {
-    const clean = v.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-    const parts = clean.match(/.{1,4}/g) || []
-    return parts.join(' ').substring(0, 19)
-  }
-
+  // ================================
+  // FORMATTERS
+  // ================================
   const formatExpiryDate = (value) => {
     const digits = value.replace(/\D/g, '').substring(0, 4)
     if (digits.length >= 3) {
@@ -25,81 +28,117 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
     return digits
   }
 
-  const handleCardNumberChange = (e) => setCardNumber(formatCardNumber(e.target.value))
-  const handleExpiryDateChange = (e) => setExpiryDate(formatExpiryDate(e.target.value))
-  const handleCvcChange = (e) => setCvc(e.target.value.replace(/\D/g, '').substring(0, 3))
+  // ================================
+  // CARD NUMBER WITH TRUE MASKING
+  // ================================
+  const handleCardNumberChange = (e) => {
+    const input = e.nativeEvent.data // last typed char
+    let newValue = cardNumber
 
-  // УПРОЩЕННАЯ ОБРАБОТКА ОПЛАТЫ
-  const handleSubmit = async (e) => {
-  e.preventDefault()
-  setIsProcessing(true)
-  setError('')
-
-  try {
-    const token = localStorage.getItem('token')
-    if (!token) throw new Error('Требуется авторизация')
-
-    // ВАЛИДАЦИЯ И ПОДГОТОВКА ВСЕХ ОБЯЗАТЕЛЬНЫХ ПОЛЕЙ
-    const requiredFields = [
-      'workstationId',
-      'coworkingCenterId', 
-      'startTime', 
-      'endTime',
-      'bookingDuration',
-      'basePrice',
-      'finalPrice'
-    ]
-
-    const missingFields = requiredFields.filter(field => !bookingDetails[field])
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required booking parameters: ${missingFields.join(', ')}`)
+    if (input === null) {
+      // backspace
+      newValue = newValue.slice(0, -1)
+    } else if (/\d/.test(input) && newValue.length < 16) {
+      newValue += input
     }
 
-    // ПОДГОТОВКА ДАННЫХ ДЛЯ СОЗДАНИЯ БРОНИРОВАНИЯ
-    const bookingData = {
-      coworkingCenterId: bookingDetails.coworkingCenterId,
-      workstationId: bookingDetails.workstationId,
-      startTime: bookingDetails.startTime,
-      endTime: bookingDetails.endTime,
-      bookingDuration: bookingDetails.bookingDuration,
-      basePrice: bookingDetails.basePrice,
-      discountPercentage: bookingDetails.discountPercentage || 0,
-      finalPrice: bookingDetails.finalPrice
-    }
+    setCardNumber(newValue)
 
-    console.log('Creating booking with data:', bookingData)
+    const masked =
+      newValue.length > 4
+        ? newValue.slice(0, -4).replace(/./g, '*') + newValue.slice(-4)
+        : newValue.replace(/./g, '*')
 
-    // Создаем бронирование
-    const createdBooking = await createBooking(bookingData, token)
-    
-    console.log('Booking created successfully:', createdBooking)
-
-    // Имитация задержки оплаты
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // Успешное завершение
-    onPaymentSuccess(createdBooking)
-    
-  } catch (err) {
-    console.error('Payment error:', err)
-    setError(err.message || 'Ошибка создания бронирования')
-  } finally {
-    setIsProcessing(false)
+    setMaskedCardNumber(masked.replace(/(.{4})/g, '$1 ').trim())
   }
-}
 
-  // Функция для получения типа рабочего места на русском
+  // ================================
+  // CVC MASKING FIXED
+  // ================================
+  const handleCvcChange = (e) => {
+    const input = e.nativeEvent.data
+    let newValue = cvc
+
+    if (input === null) {
+      newValue = newValue.slice(0, -1)
+    } else if (/\d/.test(input) && newValue.length < 3) {
+      newValue += input
+    }
+
+    setCvc(newValue)
+    setMaskedCvc('*'.repeat(newValue.length))
+  }
+
+  const handleExpiryDateChange = (e) => {
+    setExpiryDate(formatExpiryDate(e.target.value))
+  }
+
+  // ================================
+  // PAYMENT
+  // ================================
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsProcessing(true)
+    setError('')
+
+    try {
+      if (!token) throw new Error('Требуется авторизация')
+
+      const requiredFields = [
+        'workstationId',
+        'coworkingCenterId',
+        'startTime',
+        'endTime',
+        'bookingDuration',
+        'basePrice',
+        'finalPrice'
+      ]
+
+      const missingFields = requiredFields.filter(field => !bookingDetails[field])
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required booking parameters: ${missingFields.join(', ')}`)
+      }
+
+      const bookingData = {
+        coworkingCenterId: bookingDetails.coworkingCenterId,
+        workstationId: bookingDetails.workstationId,
+        startTime: bookingDetails.startTime,
+        endTime: bookingDetails.endTime,
+        bookingDuration: bookingDetails.bookingDuration,
+        basePrice: bookingDetails.basePrice,
+        discountPercentage: bookingDetails.discountPercentage || 0,
+        finalPrice: bookingDetails.finalPrice
+      }
+
+      const createdBooking = await createBooking(bookingData, token)
+
+      // clear inputs
+      setCardNumber('')
+      setMaskedCardNumber('')
+      setCvc('')
+      setMaskedCvc('')
+      setExpiryDate('')
+
+      onPaymentSuccess(createdBooking)
+
+    } catch (err) {
+      setError(err.message || 'Ошибка создания бронирования')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // Helpers
   const getWorkstationType = (type) => {
     const types = {
       'DESK': 'Стол',
-      'COMPUTER_DESK': 'Стол с ПК', 
+      'COMPUTER_DESK': 'Стол с ПК',
       'MEETING_ROOM': 'Переговорная',
       'CONFERENCE_ROOM': 'Конференц-зал'
     }
     return types[type] || type
   }
 
-  // Функция для получения длительности бронирования на русском
   const getDurationText = (duration) => {
     const durations = {
       'day': '1 день',
@@ -110,9 +149,10 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full max-h-screen overflow-y-auto">
-        {/* Header + Summary */}
+
+        {/* HEADER */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Оплата бронирования</h2>
@@ -134,7 +174,9 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-300">Дата начала:</span>
-              <span className="font-medium">{new Date(bookingDetails.startTime).toLocaleDateString('ru-RU')}</span>
+              <span className="font-medium">
+                {new Date(bookingDetails.startTime).toLocaleDateString('ru-RU')}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-300">Период:</span>
@@ -157,7 +199,7 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
           </div>
         </div>
 
-        {/* Form */}
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900 rounded-lg text-sm text-red-700 dark:text-red-300 text-center">
@@ -165,15 +207,16 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
             </div>
           )}
 
+          {/* CARD NUMBER */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Номер карты
             </label>
             <input
               type="text"
-              value={cardNumber}
+              value={maskedCardNumber}
               onChange={handleCardNumberChange}
-              placeholder="1234 5678 9012 3456"
+              placeholder="**** **** **** 1234"
               maxLength="19"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#645391] focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
               required
@@ -181,6 +224,7 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
             />
           </div>
 
+          {/* EXPIRY + CVC */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -197,15 +241,16 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
                 disabled={isProcessing}
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 CVC
               </label>
               <input
                 type="text"
-                value={cvc}
+                value={maskedCvc}
                 onChange={handleCvcChange}
-                placeholder="123"
+                placeholder="***"
                 maxLength="3"
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#645391] focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
                 required
@@ -214,12 +259,7 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
             </div>
           </div>
 
-          <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
-            <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
-              Ваши данные не сохраняются. Это демо-режим.
-            </p>
-          </div>
-
+          {/* BUTTONS */}
           <div className="flex gap-3">
             <button
               type="button"
@@ -229,6 +269,7 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentSuccess }) => 
             >
               Отмена
             </button>
+
             <button
               type="submit"
               disabled={isProcessing}

@@ -86,7 +86,6 @@ const InventoryEditing = () => {
         }
         await deleteInventoryItem(itemId, token)
         await loadData()
-        alert('Инвентарь успешно удален!')
       } catch (err) {
         console.error('Error deleting inventory item:', err)
         alert('Не удалось удалить инвентарь')
@@ -127,14 +126,6 @@ const InventoryEditing = () => {
         description: formData.description || null,
         totalQuantity: parseInt(formData.totalQuantity),
         reservedQuantity: editingItem ? editingItem.reservedQuantity : 0
-      }
-
-      if (editingItem) {
-        await updateInventoryItem(editingItem.id, itemData, token)
-        alert('Инвентарь обновлен!')
-      } else {
-        await createInventoryItem(itemData, token)
-        alert('Инвентарь создан!')
       }
 
       setShowModal(false)
@@ -268,7 +259,7 @@ const InventoryEditing = () => {
 
       {/* Модальное окно создания/редактирования */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">

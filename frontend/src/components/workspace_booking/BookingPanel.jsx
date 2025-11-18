@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { calculateBookingPrice } from '../../api/booking'
 import PaymentModal from './PaymentModal'
+import { useAuth } from '../../context/AuthContext'
 
 const BookingPanel = ({
   selectedWorkstation,
@@ -17,6 +18,7 @@ const BookingPanel = ({
   calculatedPrices,
   availabilityStatus = {}
 }) => {
+  const { token } = useAuth()
   const [priceData, setPriceData] = useState(null)
   const [loadingPrice, setLoadingPrice] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -69,10 +71,9 @@ const BookingPanel = ({
       }
       try {
         setLoadingPrice(true)
-        const token = localStorage.getItem('token')
-       
+        
         if (!token) {
-          console.error('No token found')
+          console.error('No token from AuthContext')
           setPriceData(null)
           setAppliedDiscounts([])
           return
@@ -243,7 +244,6 @@ const BookingPanel = ({
   const handlePaymentSuccess = (createdBooking) => {
     setShowPaymentModal(false)
     onBook(createdBooking)
-    alert(`Бронирование №${createdBooking.id} успешно создано и оплачено!`)
   }
 
   const handlePaymentClose = () => {
@@ -255,10 +255,6 @@ const BookingPanel = ({
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-6">
         <div className="text-center py-8">
-          <div className="text-6xl mb-4 text-gray-400">🪑</div>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-            Выберите рабочее место
-          </h3>
           <p className="text-gray-600 dark:text-gray-300">
             Нажмите на любое доступное место на плане для бронирования
           </p>
@@ -469,7 +465,7 @@ const BookingPanel = ({
         {(selectedWorkstation.type === 'MEETING_ROOM' || selectedWorkstation.type === 'CONFERENCE_ROOM') && !selectedTime && !isBookedAllDay && (
           <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
             <p className="text-sm text-yellow-700 dark:text-yellow-300 text-center">
-              Для бронирования комнаты выберите время начала в календаре слева
+              Выберите время
             </p>
           </div>
         )}

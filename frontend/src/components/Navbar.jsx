@@ -214,8 +214,8 @@ const Navbar = ({ theme, setTheme }) => {
 
   return (
     <nav className='flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 shadow-sm transition-colors duration-300'>
-      {/* Логотип */}
-      <div className='flex items-center space-x-2 cursor-pointer' onClick={() => navigate('/')}>
+      {/* Логотип - теперь некликабельный */}
+      <div className='flex items-center space-x-2'>
         <div className='w-10 h-10 bg-[#645391] dark:bg-[#A1E1DE] rounded-full flex items-center justify-center text-white dark:text-gray-900 font-bold transition-colors'>
           CS
         </div>

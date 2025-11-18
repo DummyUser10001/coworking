@@ -95,7 +95,6 @@ const ClientEditing = () => {
 
         await deleteUser(userId, token)
         await loadData()
-        alert('Клиент успешно удален!')
       } catch (err) {
         console.error('Error deleting client:', err)
         alert(err.message || 'Не удалось удалить клиента')
@@ -149,14 +148,6 @@ const handleSubmit = async (e) => {
       userData.password = formData.password
     }
 
-    if (editingUser) {
-      await updateUser(editingUser.id, userData, token)
-      alert('Клиент обновлен!')
-    } else {
-      await createUser(userData, token)
-      alert('Клиент создан!')
-    }
-
     setShowModal(false)
     setEditingUser(null)
     setFormData({
@@ -194,12 +185,6 @@ const handleSubmit = async (e) => {
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
             Управление клиентами
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Создавайте и редактируйте учетные записи клиентов
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Доступно только для администраторов
-          </p>
         </div>
 
         {error && (
@@ -291,7 +276,7 @@ const handleSubmit = async (e) => {
 
       {/* Модальное окно создания/редактирования */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">

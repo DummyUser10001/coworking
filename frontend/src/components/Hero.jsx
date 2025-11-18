@@ -48,18 +48,30 @@ const Hero = () => {
     return (
         <section className='min-h-screen bg-linear-to-br from-[#EAB7A1] via-white to-[#A1E1DE] dark:from-gray-900 dark:via-gray-800 dark:to-[#645391] flex items-center relative overflow-hidden'>
             {/* Фон с меняющимися картинками */}
+
             <div className="absolute inset-0">
-                {images.map((image, index) => (
-                    <div
-                        key={index}
-                        className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out transform ${
-                            index === currentImageIndex 
-                                ? 'opacity-20 scale-105' 
-                                : 'opacity-0 scale-100'
-                        }`}
-                        style={{ backgroundImage: `url(${image})` }}
-                    />
-                ))}
+                {images.map((image, index) => {
+                    const isActive = index === currentImageIndex;
+                    const wasActive = index === (currentImageIndex - 1 + images.length) % images.length;
+
+                    return (
+                        <div
+                            key={index}
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{
+                                backgroundImage: `url(${image})`,
+                                opacity: isActive ? 0.5 : 0,
+                                // Главная фишка: масштаб остаётся 1.1 даже после ухода
+                                transform: isActive || wasActive ? 'scale(1.1)' : 'scale(1.1)',
+                                transformOrigin: 'center',
+                                transition: `
+                                    opacity 1.8s cubic-bezier(0.4, 0, 0.2, 1),
+                                    transform 8s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+                                `,
+                            }}
+                        />
+                    );
+                })}
             </div>
 
             {/* Градиентный оверлей */}

@@ -83,7 +83,7 @@ const BookingEditing = () => {
       setShowCancelModal(false)
       setSelectedBooking(null)
     } catch (err) {
-      setError(err.message || 'Ошибка отмены')
+      setError(err.message || 'Ошибка отмена')
     } finally {
       setCancelling(false)
     }
@@ -122,17 +122,17 @@ const BookingEditing = () => {
   // Цвета
   const getStatusColor = (status) => {
     switch (status) {
-      case 'ACTIVE': return 'text-green-700 dark:text-green-400'
-      case 'COMPLETED': return 'text-blue-700 dark:text-blue-400'
-      case 'CANCELLED': return 'text-red-700 dark:text-red-400'
-      default: return 'text-gray-700 dark:text-gray-400'
+      case 'ACTIVE': return 'text-green-700 dark:text-green-300'
+      case 'COMPLETED': return 'text-blue-700 dark:text-blue-300'
+      case 'CANCELLED': return 'text-red-700 dark:text-red-300'
+      default: return 'text-gray-700 dark:text-gray-300'
     }
   }
 
   const getPaymentColor = (payment) => {
-    if (!payment) return 'text-gray-500 dark:text-gray-400 italic'
-    if (payment.refundAmount > 0) return 'text-blue-700 dark:text-blue-400'
-    return payment.status === 'REFUNDED' ? 'text-blue-700 dark:text-blue-400' : 'text-green-700 dark:text-green-400'
+    if (!payment) return 'text-gray-500 dark:text-gray-300 italic'
+    if (payment.refundAmount > 0) return 'text-blue-700 dark:text-blue-300'
+    return payment.status === 'REFUNDED' ? 'text-blue-700 dark:text-blue-300' : 'text-green-700 dark:text-green-300'
   }
 
   const getPaymentText = (payment) => {
@@ -171,23 +171,17 @@ const BookingEditing = () => {
       <div className="container mx-auto px-6 py-12">
 
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">
             Управление бронированиями
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-200">
             Просмотр и отмена бронирований
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 dark:bg-red-900 dark:border-red-700 dark:text-red-200">
             {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-            {success}
           </div>
         )}
 
@@ -195,13 +189,13 @@ const BookingEditing = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 Коворкинг-центр
               </label>
               <select
                 value={filters.coworkingCenterId}
                 onChange={(e) => setFilters({ ...filters, coworkingCenterId: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391]"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] text-gray-800 dark:text-gray-200"
               >
                 <option value="">Все коворкинги</option>
                 {coworkingCenters.map(c => (
@@ -211,13 +205,13 @@ const BookingEditing = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 Статус
               </label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391]"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] text-gray-800 dark:text-gray-200"
               >
                 <option value="all">Все</option>
                 <option value="ACTIVE">Активные</option>
@@ -227,13 +221,13 @@ const BookingEditing = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 Тип места
               </label>
               <select
                 value={filters.workstationType}
                 onChange={(e) => setFilters({ ...filters, workstationType: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391]"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] text-gray-800 dark:text-gray-200"
               >
                 <option value="all">Все типы</option>
                 <option value="DESK">Стол</option>
@@ -258,7 +252,7 @@ const BookingEditing = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
           {filteredBookings.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400 text-lg">
+              <p className="text-gray-500 dark:text-gray-300 text-lg">
                 Бронирования не найдены
               </p>
             </div>
@@ -267,15 +261,15 @@ const BookingEditing = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">ФИО</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Email</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Коворкинг</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Место</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Период</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Цена</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Статус</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Оплата</th>
-                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Действия</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">ФИО</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Email</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Коворкинг</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Место</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Период</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Цена</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Статус</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Оплата</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-200 font-semibold">Действия</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -286,18 +280,18 @@ const BookingEditing = () => {
                     return (
                       <tr key={b.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <td className="py-4 px-4">
-                          <div className="font-medium text-gray-800 dark:text-white">
+                          <div className="font-medium text-gray-800 dark:text-gray-100">
                             {getFullName(b.user)}
                           </div>
                         </td>
-                        <td className="py-4 px-4 text-gray-600 dark:text-gray-400">{b.user?.email}</td>
-                        <td className="py-4 px-4 font-medium text-gray-800 dark:text-white">
+                        <td className="py-4 px-4 text-gray-600 dark:text-gray-300">{b.user?.email}</td>
+                        <td className="py-4 px-4 font-medium text-gray-800 dark:text-gray-100">
                           {centerMap[b.coworkingCenterId] || '—'}
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-4 px-4 text-gray-600 dark:text-gray-300">
                           {translateWorkstationType(b.workstation?.type)} №{b.workstation?.number}
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 dark:text-gray-400">
+                        <td className="py-4 px-4 text-sm text-gray-600 dark:text-gray-300">
                           {formatDate(b.startTime)} — {formatDate(b.endTime)}
                         </td>
                         <td className="py-4 px-4">
@@ -342,11 +336,11 @@ const BookingEditing = () => {
 
       {/* Модалка отмены */}
       {showCancelModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                   Отмена бронирования
                 </h2>
                 <button
@@ -358,7 +352,7 @@ const BookingEditing = () => {
                 </button>
               </div>
 
-              <div className="space-y-3 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl text-sm">
+              <div className="space-y-3 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl text-sm text-gray-800 dark:text-gray-200">
                 <div><strong>ФИО:</strong> {getFullName(selectedBooking.user)}</div>
                 <div><strong>Email:</strong> {selectedBooking.user?.email}</div>
                 <div><strong>Коворкинг:</strong> {centerMap[selectedBooking.coworkingCenterId] || '—'}</div>

@@ -4,8 +4,11 @@ import { getCoworkingCenter, getFloors } from '../../api/coworking'
 import { getWorkstations } from '../../api/workspace'
 import { getColorSettings } from '../../api/colors'
 import WorkspacePlan from '../workspace_booking/WorkspacePlan'
+import { useAuth } from '../../context/AuthContext'   // ← ДОБАВИЛИ!
 
 const WorkspacePlanModal = ({ booking, onClose }) => {
+  const { token } = useAuth()   // ← ТОКЕН ОТСЮДА — БОЛЬШЕ НИГДЕ НЕ БЕРЁМ!
+
   const [colors, setColors] = useState({
     DESK: '#3B82F6',
     COMPUTER_DESK: '#10B981',
@@ -18,22 +21,17 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Функция для получения токена
-  const getToken = () => {
-    return localStorage.getItem('token')
-  }
-
   useEffect(() => {
     const fetchData = async () => {
+      if (!token) {
+        setError('Требуется авторизация')
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
         setError(null)
-        const token = getToken()
-       
-        if (!token) {
-          setError('Требуется авторизация')
-          return
-        }
 
         const [coworkingCenter, colorSettings, floorsData] = await Promise.all([
           getCoworkingCenter(booking.coworkingCenter.id, token),
@@ -52,7 +50,6 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
           floorsData.map(async (floor) => {
             try {
               const workstations = await getWorkstations(floor.id, token)
-             
               return {
                 ...floor,
                 workstations: workstations || [],
@@ -60,16 +57,12 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
               }
             } catch (err) {
               console.error(`Error loading workstations for floor ${floor.id}:`, err)
-              return {
-                ...floor,
-                workstations: [],
-                landmarks: []
-              }
+              return { ...floor, workstations: [], landmarks: [] }
             }
           })
         )
 
-        // Находим этаж, на котором находится забронированное рабочее место
+        // Находим этаж с нужным рабочим местом
         const targetFloorIndex = floorsWithWorkstations.findIndex(floor =>
           floor.workstations.some(ws => ws.id === booking.workstation.id)
         )
@@ -79,21 +72,18 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
         setCurrentFloorIndex(targetFloorIndex >= 0 ? targetFloorIndex : 0)
 
         if (colorSettings && colorSettings.workstations) {
-          setColors(prevColors => ({
-            ...prevColors,
-            ...colorSettings.workstations
-          }))
+          setColors(prev => ({ ...prev, ...colorSettings.workstations }))
         }
       } catch (err) {
-        console.error('Error fetching data:', err)
-        setError('Ошибка загрузки данных планировки')
+        console.error('Error fetching floor plan:', err)
+        setError('Ошибка загрузки плана коворкинга')
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [booking])
+  }, [booking, token])   // ← token в зависимостях!
 
   const currentFloor = floors[currentFloorIndex] || null
 
@@ -108,7 +98,7 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
           >
-            ✕
+            ×
           </button>
         </div>
 
@@ -128,15 +118,11 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
                   {selectedCoworking?.address}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Ваше забронированное место выделено на плане
-                </p>
               </div>
 
-              {/* Селектор этажей - ОСТАВЛЯЕМ ТОЛЬКО ЭТУ ИНТЕРАКТИВНОСТЬ */}
               {floors.length > 1 && (
                 <div className="flex justify-center mb-4">
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-2">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-2 inline-flex gap-2">
                     {floors.map((floor, index) => (
                       <button
                         key={floor.id}
@@ -155,7 +141,6 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
               )}
             </div>
 
-            {/* План этажа - ПОЛНОСТЬЮ НЕИНТЕРАКТИВНЫЙ */}
             {currentFloor ? (
               <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 pointer-events-none">
                 <WorkspacePlan
@@ -176,19 +161,6 @@ const WorkspacePlanModal = ({ booking, onClose }) => {
                 <p className="text-gray-600 dark:text-gray-300">Этаж не найден</p>
               </div>
             )}
-
-            {/* Информация о бронировании */}
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl">
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                Ваше забронированное место:
-              </h4>
-              <p className="text-blue-700 dark:text-blue-300">
-                {booking.workstation.type === 'DESK' ? 'Рабочий стол' :
-                 booking.workstation.type === 'COMPUTER_DESK' ? 'Стол с компьютером' :
-                 booking.workstation.type === 'MEETING_ROOM' ? 'Переговорная комната' : 'Конференц-зал'} 
-                №{booking.workstation.number}
-              </p>
-            </div>
           </div>
         )}
       </div>

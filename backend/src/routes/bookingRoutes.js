@@ -260,52 +260,79 @@ router.put('/:id', async (req, res) => {
 
 // PUT /bookings/:id/cancel - отменить бронирование (универсальный роут)
 // PUT /bookings/:id/cancel - отменить бронирование
+// PUT /bookings/:id/cancel — отменить бронь (работает даже если уже началась)
 router.put('/:id/cancel', async (req, res) => {
   const { id } = req.params;
+
   try {
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: { payment: true }
     });
 
-    if (!booking) return res.status(404).json({ error: 'Not found' });
-    if (booking.status === 'CANCELLED') return res.status(400).json({ error: 'Already cancelled' });
+    if (!booking) return res.status(404).json({ error: 'Бронь не найдена' });
+    if (booking.status === 'CANCELLED') return res.status(400).json({ error: 'Уже отменено' });
 
+    // Проверка прав
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    const isManager = ['ADMIN', 'MANAGER'].includes(user.role);
+    const isManager = user.role === 'ADMIN' || user.role === 'MANAGER';
     const isOwner = booking.userId === req.userId;
-    if (!isOwner && !isManager) return res.status(403).json({ error: 'Access denied' });
+    if (!isOwner && !isManager) return res.status(403).json({ error: 'Доступ запрещён' });
 
     const now = new Date();
-    const start = new Date(booking.startTime);
-    if (start <= now) return res.status(400).json({ error: 'Already started' });
+    const startTime = new Date(booking.startTime);
+    const endTime = new Date(booking.endTime);
 
-    const cancelledBy = isManager ? 'MANAGER' : 'USER';
-    const refund = calculateRefund(booking, now, cancelledBy);
+    // Запрещаем отмену только если бронь УЖЕ ЗАКОНЧИЛАСЬ
+    if (endTime <= now) {
+      return res.status(400).json({ error: 'Бронь уже завершена — отмена невозможна' });
+    }
 
-    // Обновляем
-    await prisma.booking.update({ where: { id }, data: { status: 'CANCELLED' } });
+    const cancelledBy = isManager ? 'manager' : 'user';
 
+    // ←←← ВАЖНО: гарантируем, что refund всегда имеет refundAmount
+    let refundResult;
+    try {
+      refundResult = calculateRefund(booking, now, cancelledBy);
+    } catch (err) {
+      refundResult = { refundAmount: 0 }; // на всякий случай
+    }
+
+    const refundAmount = Number(refundResult.refundAmount) || 0;
+
+    // Обновляем бронь
+    await prisma.booking.update({
+      where: { id },
+      data: { status: 'CANCELLED' }
+    });
+
+    // Обновляем платёж — только если он был
     if (booking.payment) {
-      const finalPrice = booking.payment.finalPrice;
-      const refundAmount = refund.refundAmount;
-
-      // Только два статуса: COMPLETED (если 0) или REFUNDED (если > 0)
-      const status = refundAmount > 0 ? 'REFUNDED' : 'COMPLETED';
-
       await prisma.payment.update({
         where: { id: booking.payment.id },
         data: {
-          status,           // только валидные: COMPLETED | REFUNDED
-          refundAmount      // может быть 0, 500, 1000 и т.д.
+          status: refundAmount > 0 ? 'REFUNDED' : 'COMPLETED',
+          refundAmount: refundAmount > 0 ? refundAmount : null // null если 0
         }
       });
     }
 
-    res.json({ message: 'Cancelled', cancelledBy: isManager ? 'manager' : 'user', refund });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Server error' });
+    // Формируем красивый ответ
+    const message = refundAmount > 0
+      ? (isManager
+          ? `Отменено менеджером. Возврат ${refundAmount}₽ (3–5 дней).`
+          : `Отменено. Возврат ${refundAmount}₽ (3–5 дней).`)
+      : 'Отменено. Возврат не предусмотрен.';
+
+    return res.json({
+      message,
+      cancelledBy,
+      refund: { refundAmount }
+    });
+
+  } catch (error) {
+    console.error('Ошибка при отмене брони:', error);
+    return res.status(500).json({ error: 'Ошибка сервера при отмене' });
   }
 });
 

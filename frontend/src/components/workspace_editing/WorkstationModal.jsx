@@ -364,9 +364,9 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className={`bg-white dark:bg-gray-800 rounded-lg p-6 ${modalWidth} max-h-[90vh] overflow-y-auto`}>
-        <h3 className="text-lg font-semibold mb-4">
+        <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
           {workstation?.id ? 'Редактирование рабочего места' : 'Создание рабочего места'}
         </h3>
         
@@ -379,7 +379,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
               className={`flex-1 py-2 text-sm font-medium ${
                 activeTab === 'properties'
                   ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400'
+                  : 'text-gray-500 dark:text-gray-300'
               }`}
             >
               Свойства
@@ -390,7 +390,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
               className={`flex-1 py-2 text-sm font-medium ${
                 activeTab === 'inventory'
                   ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400'
+                  : 'text-gray-500 dark:text-gray-300'
               }`}
             >
               Инвентарь ({roomInventory.length})
@@ -399,13 +399,13 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-700 dark:text-red-300">
             {error}
           </div>
         )}
 
         {inventoryError && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900 dark:border-red-700 dark:text-red-300">
             {inventoryError}
           </div>
         )}
@@ -414,24 +414,24 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
         {(activeTab === 'properties' || !isRoom) && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Номер места *</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Номер места *</label>
               <input
                 type="number"
                 required
                 min="1"
                 value={formData.number}
                 onChange={(e) => setFormData({...formData, number: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Тип *</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Тип *</label>
               <select
                 required
                 value={formData.type}
                 onChange={(e) => handleTypeChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
               >
                 <option value="">Выберите тип</option>
                 <option value="DESK">Стол</option>
@@ -443,45 +443,45 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Ширина *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Ширина *</label>
                 <input
                   type="number"
                   required
                   min="1"
                   value={formData.width}
                   onChange={(e) => setFormData({...formData, width: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Высота *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Высота *</label>
                 <input
                   type="number"
                   required
                   min="1"
                   value={formData.height}
                   onChange={(e) => setFormData({...formData, height: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Вместимость *</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Вместимость *</label>
               <input
                 type="number"
                 required
                 min="1"
                 value={formData.capacity}
                 onChange={(e) => setFormData({...formData, capacity: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
 
             {/* Цены в зависимости от типа */}
             {(formData.type === 'MEETING_ROOM' || formData.type === 'CONFERENCE_ROOM') && (
               <div>
-                <label className="block text-sm font-medium mb-1">Цена за час *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Цена за час *</label>
                 <input
                   type="number"
                   required
@@ -489,54 +489,51 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                   min="0"
                   value={formData.basePricePerHour}
                   onChange={(e) => setFormData({...formData, basePricePerHour: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
                   placeholder="Введите почасовую цену"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Для комнат используется только почасовая оплата
-                </p>
               </div>
             )}
 
             {(formData.type === 'DESK' || formData.type === 'COMPUTER_DESK') && (
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Цена за день *</label>
-                  <input
-                    type="number"
-                    required
-                    step="0.01"
-                    min="0"
-                    value={formData.basePricePerDay}
-                    onChange={(e) => setFormData({...formData, basePricePerDay: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Цена за неделю *</label>
-                  <input
-                    type="number"
-                    required
-                    step="0.01"
-                    min="0"
-                    value={formData.basePricePerWeek}
-                    onChange={(e) => setFormData({...formData, basePricePerWeek: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Цена за месяц *</label>
-                  <input
-                    type="number"
-                    required
-                    step="0.01"
-                    min="0"
-                    value={formData.basePricePerMonth}
-                    onChange={(e) => setFormData({...formData, basePricePerMonth: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Цена за день *</label>
+                <input
+                  type="number"
+                  required
+                  step="0.01"
+                  min="0"
+                  value={formData.basePricePerDay}
+                  onChange={(e) => setFormData({...formData, basePricePerDay: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
+                />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Цена за неделю *</label>
+                <input
+                  type="number"
+                  required
+                  step="0.01"
+                  min="0"
+                  value={formData.basePricePerWeek}
+                  onChange={(e) => setFormData({...formData, basePricePerWeek: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Цена за месяц *</label>
+                <input
+                  type="number"
+                  required
+                  step="0.01"
+                  min="0"
+                  value={formData.basePricePerMonth}
+                  onChange={(e) => setFormData({...formData, basePricePerMonth: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200"
+                />
+              </div>
+            </div>
             )}
 
             <div className="flex justify-end space-x-3 pt-4">
@@ -544,7 +541,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                 <button
                   type="button"
                   onClick={() => onDelete(workstation.id)}
-                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md dark:hover:bg-red-900"
+                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md dark:text-red-400 dark:hover:bg-red-900"
                 >
                   Удалить
                 </button>
@@ -570,7 +567,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
         {activeTab === 'inventory' && isRoom && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h4 className="text-lg font-semibold">Управление инвентарем</h4>
+              <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Управление инвентарем</h4>
               <button
                 type="button"
                 onClick={() => setShowAddInventory(!showAddInventory)}
@@ -582,11 +579,11 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
 
             {/* Таблица инвентаря в комнате */}
             <div>
-              <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">
+              <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-100">
                 Инвентарь в комнате ({roomInventory.length})
               </h5>
               {inventoryLoading ? (
-                <p className="text-center text-gray-500 py-4">Загрузка инвентаря...</p>
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">Загрузка инвентаря...</p>
               ) : roomInventory.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                   <p className="text-gray-500 dark:text-gray-400">В комнате нет инвентаря</p>
@@ -624,15 +621,15 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                         {roomInventory.map((item) => (
                           <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-600">
                             <td className="px-4 py-3 text-sm">
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <span className="font-medium text-gray-900 dark:text-gray-200">
                                 {typeNames[item.type] || item.type}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-200">
                               {item.description || '—'}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <span className="text-gray-900 dark:text-white font-medium">
+                              <span className="text-gray-900 dark:text-gray-200 font-medium">
                                 {item.totalQuantity}
                               </span>
                             </td>
@@ -642,12 +639,12 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                                   type="button"
                                   onClick={() => handleDecreaseReserved(item)}
                                   disabled={item.reservedQuantity <= 0}
-                                  className="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 rounded text-xs hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 rounded text-xs hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800"
                                 >
                                   -
                                 </button>
                                 <span className={`min-w-8 text-center font-medium ${
-                                  item.reservedQuantity > 0 ? 'text-orange-500' : 'text-gray-500'
+                                  item.reservedQuantity > 0 ? 'text-orange-500' : 'text-gray-500 dark:text-gray-400'
                                 }`}>
                                   {item.reservedQuantity}
                                 </span>
@@ -655,7 +652,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                                   type="button"
                                   onClick={() => handleIncreaseReserved(item)}
                                   disabled={item.reservedQuantity >= item.totalQuantity}
-                                  className="w-6 h-6 flex items-center justify-center bg-green-100 text-green-600 rounded text-xs hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-6 h-6 flex items-center justify-center bg-green-100 text-green-600 rounded text-xs hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800"
                                 >
                                   +
                                 </button>
@@ -692,7 +689,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
             {showAddInventory && (
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-800 dark:text-gray-200">
+                  <h5 className="font-medium text-gray-800 dark:text-gray-100">
                     Доступный инвентарь ({availableInventory.length})
                   </h5>
                   <button
@@ -740,20 +737,20 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                           {availableInventory.map((item) => (
                             <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-600">
                               <td className="px-4 py-3 text-sm">
-                                <span className="font-medium text-gray-900 dark:text-white">
+                                <span className="font-medium text-gray-900 dark:text-gray-200">
                                   {typeNames[item.type] || item.type}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-200">
                                 {item.description || '—'}
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <span className="text-gray-900 dark:text-white font-medium">
+                                <span className="text-gray-900 dark:text-gray-200 font-medium">
                                   {item.totalQuantity}
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                <span className="text-gray-500 font-medium">
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">
                                   {item.reservedQuantity}
                                 </span>
                               </td>

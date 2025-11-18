@@ -26,7 +26,7 @@ const FloorManager = ({ floors, currentFloorIndex, onFloorSelect, onAddFloor, on
             }`}
             onClick={() => onFloorSelect(index)}
           >
-            <span className="text-sm text-gray-800 dark:text-white">
+            <span className="text-sm text-white dark:text-white">
               Этаж {floor.level} {/* Используем level вместо name */}
             </span>
             {floors.length > 1 && (

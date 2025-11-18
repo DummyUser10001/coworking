@@ -108,14 +108,6 @@ const DiscountsEditing = () => {
         priority: parseInt(formData.priority)
       }
 
-      if (editingDiscount) {
-        await updateDiscount(editingDiscount.id, discountData, token)
-        alert('Скидка обновлена!')
-      } else {
-        await createDiscount(discountData, token)
-        alert('Скидка создана!')
-      }
-
       setShowModal(false)
       setEditingDiscount(null)
       setFormData({
@@ -338,7 +330,7 @@ const DiscountsEditing = () => {
 
       {/* Модальное окно создания/редактирования */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
@@ -406,14 +398,11 @@ const DiscountsEditing = () => {
                       type="number"
                       min="0"
                       step="0.01"
-                      placeholder="Оставьте пустым - лимит отсутствует"
+                      placeholder="Лимит отсутствует"
                       value={formData.maxDiscountAmount}
                       onChange={(e) => setFormData({ ...formData, maxDiscountAmount: e.target.value })}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] focus:border-transparent text-gray-800 dark:text-white"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Если пусто - ограничения нет
-                    </p>
                   </div>
 
                   <div>
@@ -423,14 +412,11 @@ const DiscountsEditing = () => {
                     <input
                       type="number"
                       min="0"
-                      placeholder="Оставьте пустым - лимит отсутствует"
+                      placeholder="Лимит отсутствует"
                       value={formData.usageLimit}
                       onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] focus:border-transparent text-gray-800 dark:text-white"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Если пусто - ограничения нет
-                    </p>
                   </div>
                 </div>
 
@@ -509,9 +495,6 @@ const DiscountsEditing = () => {
                       onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] focus:border-transparent text-gray-800 dark:text-white"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Чем выше число, тем выше приоритет
-                    </p>
                   </div>
 
                   <div className="flex items-center">

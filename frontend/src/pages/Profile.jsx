@@ -29,11 +29,32 @@ const Profile = () => {
     confirmPassword: ''
   })
 
+  // Состояния для всплывающих окон
+  const [showAlert, setShowAlert] = useState(false)
+  const [alertMessage, setAlertMessage] = useState('')
+  const [alertType, setAlertType] = useState('success') // 'success', 'error', 'info'
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [confirmMessage, setConfirmMessage] = useState('')
+  const [confirmCallback, setConfirmCallback] = useState(null)
+
   const navigate = useNavigate()
   const { user, token, updateUser } = useAuth()
 
   // Проверяем, является ли пользователь клиентом
   const isClient = user?.role === 'CLIENT'
+
+  // Функции для работы со всплывающими окнами
+  const showAlertMessage = (message, type = 'success') => {
+    setAlertMessage(message)
+    setAlertType(type)
+    setShowAlert(true)
+  }
+
+  const showConfirmDialog = (message, callback) => {
+    setConfirmMessage(message)
+    setConfirmCallback(() => callback)
+    setShowConfirm(true)
+  }
 
   // Загрузка бронирований пользователя (только для клиентов)
   useEffect(() => {
@@ -77,17 +98,17 @@ const Profile = () => {
     e.preventDefault()
     try {
       if (!token) {
-        alert('Требуется авторизация')
+        showAlertMessage('Требуется авторизация', 'error')
         return
       }
 
       const updatedProfile = await updateProfile(editProfileData, token)
       updateUser(updatedProfile) // Обновляем пользователя в контексте
       setIsEditingProfile(false)
-      alert('Профиль успешно обновлен')
+      showAlertMessage('Профиль успешно обновлен')
     } catch (err) {
       console.error('Error updating profile:', err)
-      alert('Ошибка при обновлении профиля: ' + err.message)
+      showAlertMessage('Ошибка при обновлении профиля: ' + err.message, 'error')
     }
   }
 
@@ -96,17 +117,17 @@ const Profile = () => {
     e.preventDefault()
     try {
       if (!token) {
-        alert('Требуется авторизация')
+        showAlertMessage('Требуется авторизация', 'error')
         return
       }
 
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        alert('Новый пароль и подтверждение не совпадают')
+        showAlertMessage('Новый пароль и подтверждение не совпадают', 'error')
         return
       }
 
       if (passwordData.newPassword.length < 6) {
-        alert('Новый пароль должен содержать минимум 6 символов')
+        showAlertMessage('Новый пароль должен содержать минимум 6 символов', 'error')
         return
       }
 
@@ -117,25 +138,27 @@ const Profile = () => {
 
       setIsChangingPassword(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      alert('Пароль успешно изменен')
+      showAlertMessage('Пароль успешно изменен')
     } catch (err) {
       console.error('Error changing password:', err)
-      alert('Ошибка при изменении пароля: ' + err.message)
+      showAlertMessage('Ошибка при изменении пароля: ' + err.message, 'error')
     }
   }
 
   // Функция для отмены бронирования (только для клиентов)
- const handleCancelBooking = async (bookingId, e) => {
-  e.stopPropagation();
-  if (!confirm('Отменить?')) return;
-  try {
-    const result = await cancelBooking(bookingId, token);
-    setBookings(await getUserBookings(token));
-    alert(result.message);
-  } catch (err) {
-    alert('Ошибка: ' + err.message);
-  }
-};
+  const handleCancelBooking = async (bookingId, e) => {
+    e.stopPropagation();
+    
+    showConfirmDialog('Вы уверены, что хотите отменить бронирование?', async () => {
+      try {
+        const result = await cancelBooking(bookingId, token);
+        setBookings(await getUserBookings(token));
+        showAlertMessage(result.message);
+      } catch (err) {
+        showAlertMessage('Ошибка: ' + err.message, 'error');
+      }
+    });
+  };
 
   // Функция для просмотра плана (только для клиентов)
   const handleViewPlan = async (booking, event) => {
@@ -226,28 +249,27 @@ const Profile = () => {
   }
 
   // Функция для получения информации о возврате
- // ← Замени эту функцию целиком
-const getRefundInfo = (booking) => {
-  if (booking.status !== 'CANCELLED' || !booking.payment) return null
+  const getRefundInfo = (booking) => {
+    if (booking.status !== 'CANCELLED' || !booking.payment) return null
 
-  const { status, refundAmount = 0 } = booking.payment
+    const { status, refundAmount = 0 } = booking.payment
 
-  if (refundAmount > 0) {
-    return `Возврат: ${refundAmount}₽`  // ← Универсальный кейс
+    if (refundAmount > 0) {
+      return `Возврат: ${refundAmount}₽`  // ← Универсальный кейс
+    }
   }
-}
 
   // Функция для получения заголовка в зависимости от роли
   const getProfileTitle = () => {
     switch (user?.role) {
       case 'CLIENT':
-        return 'Управление вашими бронированиями'
+        return 'Клиент'
       case 'MANAGER':
-        return 'Панель менеджера'
+        return 'Менеджер'
       case 'ADMIN':
-        return 'Панель администратора'
+        return 'Администратор'
       default:
-        return 'Личный кабинет'
+        return ''
     }
   }
 
@@ -301,11 +323,6 @@ const getRefundInfo = (booking) => {
           <p className="text-xl text-gray-600 dark:text-gray-300">
             {getProfileTitle()}
           </p>
-          {!isClient && (
-            <p className="text-lg text-gray-500 dark:text-gray-400 mt-2">
-              Роль: {user?.role === 'MANAGER' ? 'Менеджер' : 'Администратор'}
-            </p>
-          )}
         </div>
 
         <div className="max-w-4xl mx-auto">
@@ -401,14 +418,6 @@ const getRefundInfo = (booking) => {
                     <div>
                       <span className="text-gray-500 dark:text-gray-400 text-sm">Email:</span>
                       <p className="text-gray-800 dark:text-white font-medium text-lg">{user.email}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">Роль:</span>
-                      <p className="text-gray-800 dark:text-white font-medium text-lg">
-                        {user.role === 'CLIENT' ? 'Клиент' : 
-                         user.role === 'MANAGER' ? 'Менеджер' : 
-                         user.role === 'ADMIN' ? 'Администратор' : user.role}
-                      </p>
                     </div>
                     
                     {/* Кнопки под данными */}
@@ -715,6 +724,93 @@ const getRefundInfo = (booking) => {
           booking={selectedPlanBooking}
           onClose={() => setSelectedPlanBooking(null)}
         />
+      )}
+
+      {/* Всплывающее окно для уведомлений */}
+      {showAlert && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-auto animate-in fade-in zoom-in duration-200">
+            <div className="text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                alertType === 'success' 
+                  ? 'bg-green-100 dark:bg-green-900' 
+                  : alertType === 'error'
+                  ? 'bg-red-100 dark:bg-red-900'
+                  : 'bg-blue-100 dark:bg-blue-900'
+              }`}>
+                {alertType === 'success' ? (
+                  <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                ) : alertType === 'error' ? (
+                  <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                )}
+              </div>
+              <h3 className={`text-2xl font-bold mb-3 ${
+                alertType === 'success' 
+                  ? 'text-green-800 dark:text-green-300'
+                  : alertType === 'error'
+                  ? 'text-red-800 dark:text-red-300'
+                  : 'text-blue-800 dark:text-blue-300'
+              }`}>
+                {alertType === 'success' ? 'Успешно!' : alertType === 'error' ? 'Ошибка!' : 'Информация'}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                {alertMessage}
+              </p>
+              <button
+                onClick={() => setShowAlert(false)}
+                className="w-full py-4 bg-[#645391] hover:bg-[#52447a] text-white rounded-xl font-semibold text-lg transition-all duration-300"
+              >
+                Понятно
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Всплывающее окно для подтверждения действий */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-auto animate-in fade-in zoom-in duration-200">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                Подтверждение действия
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                {confirmMessage}
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    if (confirmCallback) confirmCallback()
+                    setShowConfirm(false)
+                  }}
+                  className="flex-1 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold text-lg transition-all duration-300"
+                >
+                  Да
+                </button>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 py-4 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-semibold text-lg transition-all duration-300"
+                >
+                  Нет
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

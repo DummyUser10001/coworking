@@ -1,24 +1,27 @@
 // frontend\src\components\WorkspaceShowcase.jsx
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const WorkspaceShowcase = ({ theme }) => {
+  const navigate = useNavigate() // Добавляем хук useNavigate
+  
   const spaces = [
     {
       type: 'Открытое пространство',
-      price: '500₽/день',
-      features: ['Общий стол', 'Бесплатный кофе', 'Сообщество'],
+      price: 'от 500₽/день',
+      features: ['Столы с компьютером и без', 'Бесплатный кофе', 'Шкафчики для вещей'],
       color: 'from-[#EAB7A1] to-[#f8d3c5]'
     },
     {
-      type: 'Приватный кабинет',
-      price: '1200₽/день',
-      features: ['Изолированное помещение', 'Персональный стол', 'Конференц-зона'],
+      type: 'Переговорная',
+      price: 'от 250₽/час',
+      features: ['Изолированное помещение', 'Маркерная доска', 'Большой стол'],
       color: 'from-[#A1E1DE] to-[#c0f0ed]'
     },
     {
-      type: 'Переговорная',
-      price: '800₽/час',
-      features: ['До 10 человек', 'Проектор', 'Маркерная доска'],
+      type: 'Конференц-зал  ',
+      price: 'от 600₽/час',
+      features: ['Просторное помещение', 'Проектор', 'Микрофон и колонки'],
       color: 'from-[#645391] to-[#7d69a9] text-white'
     }
   ]
@@ -55,11 +58,14 @@ const WorkspaceShowcase = ({ theme }) => {
                   </li>
                 ))}
               </ul>
-              <button className={`mt-6 w-full py-3 rounded-xl font-semibold transition-all ${
-                space.color.includes('text-white') 
-                  ? 'bg-white text-[#645391] hover:bg-gray-100' 
-                  : 'bg-[#645391] text-white hover:bg-[#52447a]'
-              }`}>
+              <button 
+                className={`mt-6 w-full py-3 rounded-xl font-semibold transition-all ${
+                  space.color.includes('text-white') 
+                    ? 'bg-white text-[#645391] hover:bg-gray-100' 
+                    : 'bg-[#645391] text-white hover:bg-[#52447a]'
+                }`}
+                onClick={() => navigate('/map')} 
+              >
                 Забронировать
               </button>
             </div>

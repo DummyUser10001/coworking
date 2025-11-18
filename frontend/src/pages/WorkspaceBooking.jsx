@@ -46,6 +46,8 @@ const WorkspaceBooking = ({ theme }) => {
   const { coworkingId } = location.state || {}
   const { token } = useAuth()
   const currentFloor = floors[currentFloorIndex] || null
+  const [successBooking, setSuccessBooking] = useState(null)
+  
 
   // -----------------------------------------------------------------
   //  Вспомогательные функции для работы с датами
@@ -265,6 +267,7 @@ const WorkspaceBooking = ({ theme }) => {
   const handleBook = async (createdBooking = null) => {
     try {
       if (createdBooking) {
+        setSuccessBooking(createdBooking)
         setSelectedWorkstation(null)
         setSelectedTime('')
         setCalculatedPrices(null)
@@ -336,8 +339,7 @@ const WorkspaceBooking = ({ theme }) => {
 
       const newBooking = await createBooking(bookingData, token)
       
-      alert(`Бронирование места №${selectedWorkstation.number} успешно!\nДата: ${selectedDate.toLocaleDateString('ru-RU')}\nТип: ${bookingDuration}\nСтоимость: ${bookingData.finalPrice.toFixed(0)}₽`)
-
+      
       setSelectedWorkstation(null)
       setSelectedTime('')
       setCalculatedPrices(null)
@@ -530,7 +532,7 @@ const WorkspaceBooking = ({ theme }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-linear-to-br from-[#EAB7A1] via-white to-[#A1E1DE] dark:from-gray-900 dark:via-gray-800 dark:to-[#645391] transition-colors duration-300">
       <div className="container mx-auto px-6 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">
@@ -539,9 +541,7 @@ const WorkspaceBooking = ({ theme }) => {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
             {selectedCoworking?.address || 'Коворкинг-центр'}
           </p>
-          <p className="text-lg text-gray-500 dark:text-gray-400">
-            {currentFloor ? `Этаж ${currentFloor.level}` : 'Загрузка этажа...'}
-          </p>
+
         </div>
 
         <div className="mb-6">
@@ -606,6 +606,32 @@ const WorkspaceBooking = ({ theme }) => {
               availabilityStatus={availabilityStatus}
             />
           </div>
+          {/* ← МОДАЛКА УСПЕХА ТЕПЕРЬ ЗДЕСЬ (вне BookingPanel) */}
+          {successBooking && (
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-auto animate-in fade-in zoom-in duration-200">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                    Бронирование успешно!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-8">
+                    Бронирование успешно создано и оплачено!
+                  </p>
+                  <button
+                    onClick={() => setSuccessBooking(null)}
+                    className="w-full py-4 bg-[#645391] hover:bg-[#52447a] text-white rounded-xl font-semibold text-lg transition-all duration-300"
+                  >
+                    Понятно
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
