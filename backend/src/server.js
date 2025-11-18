@@ -16,10 +16,10 @@ import profileRoutes from './routes/profileRoutes.js'
 import usersRoutes from './routes/usersRoutes.js'
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CLIENT_URL,
   credentials: true
 }))
 
