@@ -6,6 +6,7 @@ import prisma from '../prismaClient.js'
 const router = express.Router()
 
 // Register a new user endpoing /auth/register
+// backend/src/routes/authRoutes.js
 router.post('/register', async (req, res) => {
     const { 
         email, 
@@ -13,14 +14,23 @@ router.post('/register', async (req, res) => {
         firstName,
         lastName,
         middleName,
-        role
+        role = 'CLIENT' // Добавляем значение по умолчанию
     } = req.body
 
-    // encrypt the password
-    const hashedPassword = bcrypt.hashSync(password, 8)
-
-    // save the new user and hashed password to the db
+    // Проверяем, существует ли пользователь с таким email
     try {
+        const existingUser = await prisma.user.findUnique({
+            where: { email: email }
+        })
+
+        if (existingUser) {
+            return res.status(400).send({ message: "User with this email already exists" })
+        }
+
+        // encrypt the password
+        const hashedPassword = bcrypt.hashSync(password, 8)
+
+        // save the new user and hashed password to the db
         const user = await prisma.user.create({
             data: {
                 email,
@@ -36,8 +46,17 @@ router.post('/register', async (req, res) => {
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' })
         res.json({ token })
     } catch (err) {
-        console.log(err.message)
-        res.sendStatus(503)
+        console.log('Registration error:', err.message)
+        
+        // Более детальная обработка ошибок
+        if (err.code === 'P2002') { // Prisma unique constraint error
+            return res.status(400).send({ message: "User with this email already exists" })
+        }
+        
+        res.status(503).send({ 
+            message: "Service unavailable", 
+            error: err.message 
+        })
     }
 })
 
