@@ -1,4 +1,3 @@
-// backend/src/jobs/bookingStatusJob.js
 import prisma from '../prismaClient.js'
 
 const updateExpiredBookings = async () => {
@@ -18,10 +17,10 @@ const updateExpiredBookings = async () => {
     })
 
     if (result.count > 0) {
-      console.log(`✅ [CRON] Updated ${result.count} booking(s) to COMPLETED at ${now.toISOString()}`)
+      console.log(`[CRON] Updated ${result.count} booking(s) to COMPLETED at ${now.toISOString()}`)
     }
   } catch (error) {
-    console.error('❌ [CRON] Error updating expired bookings:', error)
+    console.error('[CRON] Error updating expired bookings:', error)
   }
 }
 

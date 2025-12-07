@@ -1,4 +1,3 @@
-// backend/prisma/seed.js
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
@@ -7,7 +6,6 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Starting seed...')
 
-  // === ОЧИСТКА БАЗЫ (ПРАВИЛЬНЫЙ ПОРЯДОК) ===
   console.log('Cleaning database...')
   await prisma.booking.deleteMany()
   await prisma.payment.deleteMany()
@@ -20,7 +18,6 @@ async function main() {
   await prisma.user.deleteMany()
   await prisma.workstationColorSettings.deleteMany()
 
-  // === ПОЛЬЗОВАТЕЛИ ===
   console.log('Creating users...')
   const hashedPassword = await bcrypt.hash('password123', 10)
 
@@ -44,7 +41,7 @@ async function main() {
 
   console.log(`Created ${await prisma.user.count()} users`)
 
-  // === НАСТРОЙКИ ЦВЕТОВ ===
+
   console.log('Creating color settings...')
   await prisma.workstationColorSettings.create({
     data: {
@@ -63,7 +60,6 @@ async function main() {
     }
   })
 
-  // === КОВОРКИНГ-ЦЕНТРЫ ===
   console.log('Creating coworking centers...')
   const coworking1 = await prisma.coworkingCenter.create({
     data: {
@@ -107,14 +103,13 @@ async function main() {
     }
   })
 
-  // === ЭТАЖИ ===
+
   console.log('Creating floors...')
   const floor1_1 = await prisma.floor.create({ data: { level: 1, width: 12, height: 10, coworkingCenterId: coworking1.id } })
   const floor1_2 = await prisma.floor.create({ data: { level: 2, width: 10, height: 8, coworkingCenterId: coworking1.id } })
   const floor2_1 = await prisma.floor.create({ data: { level: 1, width: 15, height: 12, coworkingCenterId: coworking2.id } })
   const floor3_1 = await prisma.floor.create({ data: { level: 1, width: 8, height: 6, coworkingCenterId: coworking3.id } })
 
-  // === ОРИЕНТИРЫ ===
   console.log('Creating landmarks...')
   await prisma.landmark.createMany({
     data: [
@@ -129,7 +124,6 @@ async function main() {
     ]
   })
 
-  // === РАБОЧИЕ МЕСТА ===
   console.log('Creating workstations...')
   await prisma.workstation.createMany({
     data: [
@@ -164,15 +158,13 @@ async function main() {
     ]
   })
 
-  // === ИНВЕНТАРЬ ===
+
   console.log('Creating inventory...')
-  // ... (инвентарь без изменений)
 
-  // === СКИДКИ ===
+
   console.log('Creating discounts...')
-  // ... (скидки без изменений)
 
-  // === БРОНИРОВАНИЯ И ПЛАТЕЖИ ===
+
   console.log('Creating bookings and payments...')
 
   const users = await prisma.user.findMany({ where: { role: 'CLIENT' } })
@@ -180,14 +172,12 @@ async function main() {
     include: { floor: { select: { coworkingCenterId: true } } }
   })
 
-  // 1. Активные бронирования (сегодня)
   const desksForBooking = workstations.filter(ws => ['DESK', 'COMPUTER_DESK'].includes(ws.type))
   for (let i = 0; i < Math.min(3, desksForBooking.length); i++) {
     const ws = desksForBooking[i]
     const start = new Date(); start.setHours(9, 0, 0, 0)
     const end = new Date(); end.setHours(18, 0, 0, 0)
 
-    // Создаем платеж сначала
     const payment = await prisma.payment.create({
       data: {
         userId: users[i % users.length].id,
@@ -214,7 +204,6 @@ async function main() {
     })
   }
 
-  // 2. Завершённые бронирования (вчера)
   for (let i = 0; i < Math.min(2, desksForBooking.length); i++) {
     const ws = desksForBooking[i]
     const start = new Date()
@@ -251,7 +240,7 @@ async function main() {
     })
   }
 
-  // 3. Отменённое бронирование с полным возвратом
+  //  Отменённое бронирование с полным возвратом
   if (desksForBooking.length > 0) {
     const ws = desksForBooking[0]
     const start = new Date(); start.setDate(start.getDate() + 5); start.setHours(9, 0, 0, 0)
@@ -322,7 +311,6 @@ async function main() {
   console.log(`Created ${await prisma.booking.count()} bookings`)
   console.log(`Created ${await prisma.payment.count()} payments`)
 
-  // === СТАТИСТИКА ===
   console.log('Seed completed!')
   console.log(`Users: ${await prisma.user.count()}`)
   console.log(`Coworking Centers: ${await prisma.coworkingCenter.count()}`)
@@ -331,7 +319,7 @@ async function main() {
   console.log(`Bookings: ${await prisma.booking.count()}`)
   console.log(`Payments: ${await prisma.payment.count()}`)
   
-  // Вывод данных для тестирования
+
   console.log('\n=== ДАННЫЕ ДЛЯ ТЕСТИРОВАНИЯ ===')
   console.log('Клиенты:')
   console.log('- ivan@example.com / password123')

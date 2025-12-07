@@ -1,4 +1,4 @@
-// frontend/src/api/api.js
+
 const API_URL = import.meta.env.VITE_API_URL
 
 export async function apiFetch(endpoint, options = {}) {
@@ -7,7 +7,7 @@ export async function apiFetch(endpoint, options = {}) {
       'Content-Type': 'application/json',
       ...(options.headers || {})
     },
-    credentials: 'include', // если в будущем будет нужна авторизация с cookie
+    credentials: 'include', 
     ...options
   })
 

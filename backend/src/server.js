@@ -41,11 +41,11 @@ app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`)
 })
 
-// === CRON: Каждый час (в 00 минут) ===
+// каждый час 
 cron.schedule('0 * * * *', () => {
-  console.log('⏰ [CRON] Running hourly booking status check...')
+  console.log('[CRON] Running hourly booking status check...')
   updateExpiredBookings()
 })
 
-// Опционально: при старте сервера — сразу проверить (на случай перезапуска)
+// при старте сервера сразу проверить 
 updateExpiredBookings()

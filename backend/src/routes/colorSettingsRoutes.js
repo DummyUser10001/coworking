@@ -1,11 +1,8 @@
 import express from 'express'
 import prisma from '../prismaClient.js'
-//import authMiddleware from '../middleware/authMiddleware.js'
+
 
 const router = express.Router()
-
-// Применяем middleware ко всем роутам
-//router.use(authMiddleware)
 
 // GET /color-settings - получить глобальные настройки цветов
 router.get('/', async (req, res) => {

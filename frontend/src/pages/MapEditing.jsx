@@ -183,9 +183,6 @@ const MapEditing = () => {
             <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
               Управление коворкинг-центрами
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Создание, редактирование и удаление коворкинг-пространств
-            </p>
           </div>
 
           {error && (

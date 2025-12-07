@@ -410,7 +410,6 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
           </div>
         )}
 
-        {/* Вкладка свойств */}
         {(activeTab === 'properties' || !isRoom) && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -478,7 +477,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
               />
             </div>
 
-            {/* Цены в зависимости от типа */}
+
             {(formData.type === 'MEETING_ROOM' || formData.type === 'CONFERENCE_ROOM') && (
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Цена за час *</label>
@@ -563,7 +562,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
           </form>
         )}
 
-        {/* Вкладка инвентаря */}
+ 
         {activeTab === 'inventory' && isRoom && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -577,7 +576,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
               </button>
             </div>
 
-            {/* Таблица инвентаря в комнате */}
+
             <div>
               <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-100">
                 Инвентарь в комнате ({roomInventory.length})

@@ -1,10 +1,8 @@
 import express from 'express'
 import prisma from '../prismaClient.js'
-//import authMiddleware from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
-//router.use(authMiddleware)
 
 // GET /landmarks - получить все ориентиры (с фильтрацией по этажу)
 router.get('/', async (req, res) => {

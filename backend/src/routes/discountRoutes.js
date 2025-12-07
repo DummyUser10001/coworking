@@ -60,14 +60,33 @@ router.post('/', async (req, res) => {
   } = req.body
 
   try {
-    // Проверяем, что процент скидки не превышает 50%
+    // Валидация обязательных полей
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Название скидки обязательно' })
+    }
+
+    if (!percentage || percentage <= 0) {
+      return res.status(400).json({ error: 'Размер скидки должен быть положительным числом' })
+    }
+
     if (percentage > 50) {
       return res.status(400).json({ error: 'Размер скидки не может превышать 50%' })
     }
 
-    // Проверяем, что дата окончания не раньше даты начала
+    if (!startDate) {
+      return res.status(400).json({ error: 'Дата начала обязательна' })
+    }
+
+    if (!endDate) {
+      return res.status(400).json({ error: 'Дата окончания обязательна' })
+    }
+
     if (new Date(endDate) < new Date(startDate)) {
       return res.status(400).json({ error: 'Дата окончания не может быть раньше даты начала' })
+    }
+
+    if (!applicableDays || applicableDays.length === 0) {
+      return res.status(400).json({ error: 'Выберите хотя бы один день недели' })
     }
 
     // Проверяем уникальность названия скидки
@@ -82,7 +101,7 @@ router.post('/', async (req, res) => {
     const discount = await prisma.discount.create({
       data: {
         name,
-        description,
+        description: description || '',
         percentage: parseFloat(percentage),
         maxDiscountAmount: maxDiscountAmount ? parseFloat(maxDiscountAmount) : null,
         usageLimit: usageLimit ? parseInt(usageLimit) : null,
@@ -135,14 +154,27 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Discount not found' })
     }
 
-    // Проверяем, что процент скидки не превышает 50%
-    if (percentage > 50) {
-      return res.status(400).json({ error: 'Размер скидки не может превышать 50%' })
+    // Валидация
+    if (name && !name.trim()) {
+      return res.status(400).json({ error: 'Название скидки обязательно' })
     }
 
-    // Проверяем, что дата окончания не раньше даты начала
-    if (new Date(endDate) < new Date(startDate)) {
+    if (percentage !== undefined) {
+      if (percentage <= 0) {
+        return res.status(400).json({ error: 'Размер скидки должен быть положительным числом' })
+      }
+      
+      if (percentage > 50) {
+        return res.status(400).json({ error: 'Размер скидки не может превышать 50%' })
+      }
+    }
+
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
       return res.status(400).json({ error: 'Дата окончания не может быть раньше даты начала' })
+    }
+
+    if (applicableDays && applicableDays.length === 0) {
+      return res.status(400).json({ error: 'Выберите хотя бы один день недели' })
     }
 
     // Если меняется название, проверяем уникальность
@@ -159,9 +191,9 @@ router.put('/:id', async (req, res) => {
     const discount = await prisma.discount.update({
       where: { id },
       data: {
-        name,
-        description,
-        percentage: percentage ? parseFloat(percentage) : currentDiscount.percentage,
+        name: name !== undefined ? name : currentDiscount.name,
+        description: description !== undefined ? description : currentDiscount.description,
+        percentage: percentage !== undefined ? parseFloat(percentage) : currentDiscount.percentage,
         maxDiscountAmount: maxDiscountAmount !== undefined 
           ? (maxDiscountAmount ? parseFloat(maxDiscountAmount) : null)
           : currentDiscount.maxDiscountAmount,

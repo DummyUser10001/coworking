@@ -1,18 +1,4 @@
-/**
- * Рассчитывает итоговую стоимость с учётом всех применимых скидок
- * @param {number} price - базовая цена
- * @param {Array} discounts - массив скидок из БД
- * @param {Date|string} bookingDate - дата и время бронирования (ISO string или Date)
- * @param {number} maxDiscountsApplied - максимум применяемых скидок (по приоритету)
- * @returns {Object} - результат с finalPrice, скидками и т.д.
- */
-// backend\src\discountCalculation.js
 
-// ... существующий код ...
-
-/**
- * Расширенная версия функции расчета скидок с возвратом детальной информации
- */
 function calculateDiscountWithPriority(
   price,
   discounts,

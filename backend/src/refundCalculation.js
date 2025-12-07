@@ -11,7 +11,7 @@ export function calculateRefund(booking, cancellationTime, cancelledBy = 'USER')
   const hoursUntilStart = (startTime - now) / (1000 * 60 * 60);
   const bookingType = getBookingType(startTime, endTime);
 
-  // ЦЕНА ТОЛЬКО ИЗ payment.finalPrice
+  // цена из payment.finalPrice
   const price = booking.payment?.finalPrice ?? 0;
   if (price <= 0) {
     return { refundAmount: 0, refundPercentage: 0, isFullRefund: false, reason: 'No payment' };
@@ -32,7 +32,7 @@ export function calculateRefund(booking, cancellationTime, cancelledBy = 'USER')
   return { ...refundResult, bookingType, hoursUntilStart };
 }
 
-// --- Вспомогательные ---
+// Вспомогательные
 function getBookingType(start, end) {
   const h = (end - start) / 3600000;
   const d = h / 24;
@@ -68,6 +68,6 @@ export function isRefundPossible(booking, cancellationTime) {
   return calculateRefund(booking, cancellationTime).refundAmount > 0;
 }
 
-export function getRefundPolicy() { /* без изменений */ }
+export function getRefundPolicy() {}
 
 export default { calculateRefund, isRefundPossible, getRefundPolicy };

@@ -56,7 +56,6 @@ router.get('/:id', async (req, res) => {
 })
 
 // POST /workstations - создать рабочее место
-// POST /workstations - создать рабочее место
 router.post('/', async (req, res) => {
   const { 
     number, 

@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL
 
-// ==================== ОПЕРАЦИИ СО СКИДКАМИ (требуют аутентификации) ====================
+// === ВСЕ ОПЕРАЦИИ СО СКИДКАМИ ТРЕБУЮТ АУТЕНТИФИКАЦИИ ===
 
 // Получить все скидки
 export const getAllDiscounts = async (token) => {
@@ -8,7 +8,7 @@ export const getAllDiscounts = async (token) => {
     const response = await fetch(`${API_URL}/discounts`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': token, // Исправлено: без Bearer префикса
         'Content-Type': 'application/json'
       }
     })
@@ -31,7 +31,7 @@ export const getDiscount = async (discountId, token) => {
     const response = await fetch(`${API_URL}/discounts/${discountId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': token,
         'Content-Type': 'application/json'
       }
     })
@@ -54,7 +54,7 @@ export const createDiscount = async (discountData, token) => {
     const response = await fetch(`${API_URL}/discounts`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': token,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(discountData)
@@ -78,7 +78,7 @@ export const updateDiscount = async (discountId, updateData, token) => {
     const response = await fetch(`${API_URL}/discounts/${discountId}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': token,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(updateData)
@@ -97,36 +97,43 @@ export const updateDiscount = async (discountId, updateData, token) => {
 }
 
 // Удалить скидку
+// Удалить скидку
 export const deleteDiscount = async (discountId, token) => {
   try {
     const response = await fetch(`${API_URL}/discounts/${discountId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': token,
         'Content-Type': 'application/json'
       }
     })
     
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to delete discount')
+      // Пробуем получить ошибку из JSON, если есть
+      try {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete discount')
+      } catch (jsonError) {
+        // Если не удалось распарсить JSON, используем текст статуса
+        throw new Error(`Failed to delete discount: ${response.status} ${response.statusText}`)
+      }
     }
     
-    return await response.json()
+    // Для статуса 204 возвращаем успех без парсинга JSON
+    return { success: true }
   } catch (error) {
     console.error('Error deleting discount:', error)
     throw error
   }
 }
 
-// ==================== ОБЩИЕ ОПЕРАЦИИ СО СКИДКАМИ (без аутентификации) ====================
-
 // Получить активные скидки
-export const getActiveDiscounts = async () => {
+export const getActiveDiscounts = async (token) => {
   try {
     const response = await fetch(`${API_URL}/discounts/status/active`, {
       method: 'GET',
       headers: {
+        'Authorization': token,
         'Content-Type': 'application/json'
       }
     })
@@ -144,7 +151,7 @@ export const getActiveDiscounts = async () => {
 }
 
 // Проверить доступные скидки по критериям
-export const checkDiscountAvailability = async (criteria) => {
+export const checkDiscountAvailability = async (criteria, token) => {
   try {
     const { date, time, dayOfWeek } = criteria
     
@@ -160,6 +167,7 @@ export const checkDiscountAvailability = async (criteria) => {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
+        'Authorization': token,
         'Content-Type': 'application/json'
       }
     })
@@ -184,18 +192,12 @@ export const getDiscountsByStatus = async (isActive, token) => {
       url += `?isActive=${isActive}`
     }
 
-    const headers = {
-      'Content-Type': 'application/json'
-    }
-
-    // Добавляем токен, если передан (для админских операций)
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-
     const response = await fetch(url, {
       method: 'GET',
-      headers
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
     })
     
     if (!response.ok) {
@@ -211,11 +213,12 @@ export const getDiscountsByStatus = async (isActive, token) => {
 }
 
 // Применить скидку к бронированию (расчет суммы со скидкой)
-export const applyDiscountToBooking = async (bookingData, discountId) => {
+export const applyDiscountToBooking = async (bookingData, discountId, token) => {
   try {
     const response = await fetch(`${API_URL}/discounts/apply/${discountId}`, {
       method: 'POST',
       headers: {
+        'Authorization': token,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(bookingData)
@@ -234,10 +237,10 @@ export const applyDiscountToBooking = async (bookingData, discountId) => {
 }
 
 // Получить скидки для определенного дня и времени
-export const getDiscountsForDateTime = async (date, time) => {
+export const getDiscountsForDateTime = async (date, time, token) => {
   try {
     const criteria = { date, time }
-    return await checkDiscountAvailability(criteria)
+    return await checkDiscountAvailability(criteria, token)
   } catch (error) {
     console.error('Error getting discounts for date time:', error)
     throw error

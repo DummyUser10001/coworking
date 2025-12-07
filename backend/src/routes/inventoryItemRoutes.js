@@ -1,10 +1,8 @@
 import express from 'express'
 import prisma from '../prismaClient.js'
-//import authMiddleware from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
-//router.use(authMiddleware)
 
 // GET /inventory-items - получить весь инвентарь (с фильтрацией по рабочему месту и типу)
 router.get('/', async (req, res) => {
@@ -35,15 +33,6 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch inventory items' })
   }
 })
-
-// ---------- НОВЫЙ МАРШРУТ ----------
-/**
- * GET /inventory-items/available
- * Возвращает инвентарь, который:
- *   • не привязан к рабочему месту (workstationId = null)
- *   • имеет свободные единицы (reservedQuantity < totalQuantity)
- */
-
 
 
 // GET /inventory-items/available
@@ -302,7 +291,6 @@ router.patch('/:id/quantity', async (req, res) => {
   }
 })
 
-// PATCH /inventory-items/:id/workstation
 // PATCH /inventory-items/:id/workstation
 router.patch('/:id/workstation', async (req, res) => {
   const { id } = req.params

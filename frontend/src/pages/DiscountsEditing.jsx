@@ -1,4 +1,3 @@
-// frontend/src/pages/DiscountsEditing.jsx
 import React, { useState, useEffect } from 'react'
 import { 
   getAllDiscounts, 
@@ -75,10 +74,8 @@ const DiscountsEditing = () => {
       try {
         await deleteDiscount(discountId, token)
         await loadDiscounts()
-        alert('Скидка успешно удалена!')
       } catch (err) {
         console.error('Error deleting discount:', err)
-        alert('Не удалось удалить скидку')
       }
     }
   }
@@ -86,10 +83,13 @@ const DiscountsEditing = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    console.log('Submitting form with data:', formData)
+    console.log('Token:', token)
+    console.log('Editing discount:', editingDiscount)
+
     // Валидация на клиенте
     const validation = validateDiscountData(formData)
     if (!validation.isValid) {
-      alert('Пожалуйста, исправьте ошибки в форме: ' + Object.values(validation.errors).join(', '))
       return
     }
 
@@ -108,6 +108,20 @@ const DiscountsEditing = () => {
         priority: parseInt(formData.priority)
       }
 
+      console.log('Sending discount data:', discountData)
+
+      // ВАЖНО: Выбор между созданием и редактированием
+      if (editingDiscount) {
+        // Редактирование существующей скидки
+        console.log('Updating discount with ID:', editingDiscount.id)
+        await updateDiscount(editingDiscount.id, discountData, token)
+      } else {
+        // Создание новой скидки
+        console.log('Creating new discount')
+        await createDiscount(discountData, token)
+      }
+
+      // Закрытие модалки и сброс формы
       setShowModal(false)
       setEditingDiscount(null)
       setFormData({
@@ -124,10 +138,11 @@ const DiscountsEditing = () => {
         priority: 0
       })
 
+      // Перезагрузка списка скидок
       await loadDiscounts()
+      
     } catch (err) {
       console.error('Error saving discount:', err)
-      alert(err.message || 'Не удалось сохранить скидку')
     }
   }
   
@@ -183,9 +198,6 @@ const DiscountsEditing = () => {
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
             Управление скидками
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Создавайте и редактируйте скидочные предложения
-          </p>
         </div>
 
         {error && (

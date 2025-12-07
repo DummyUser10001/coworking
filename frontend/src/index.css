@@ -1,4 +1,4 @@
-/* frontend\src\index.css */
+
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
 @import url('https://unpkg.com/leaflet/dist/leaflet.css');
@@ -11,7 +11,7 @@
    font-weight: 500;
 }
 
-/* Кастомные цвета для темы */
+
 @theme {
   --color-primary: #645391;
   --color-secondary: #A1E1DE;
@@ -26,7 +26,7 @@
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-/* Кастомные курсоры для интерактивных элементов */
+
 button, 
 a, 
 [role="button"],
@@ -36,28 +36,28 @@ input[type="button"],
   cursor: pointer !important;
 }
 
-/* Особые стили для разных состояний */
+
 button:hover, 
 a:hover,
 [role="button"]:hover {
   cursor: pointer !important;
 }
 
-/* Для disabled элементов */
+
 button:disabled,
 [role="button"]:disabled {
   cursor: not-allowed !important;
   opacity: 0.6;
 }
 
-/* Для input полей */
+
 input:not([type="button"]):not([type="submit"]):not([type="reset"]),
 textarea,
 select {
   cursor: text !important;
 }
 
-/* Кастомные стили для скроллбара */
+
 ::-webkit-scrollbar {
   width: 8px;
   cursor: pointer;

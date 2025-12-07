@@ -1,4 +1,4 @@
-// frontend/src/pages/BookingEditing.jsx
+
 import React, { useState, useEffect } from 'react'
 import { getAllBookings, cancelBooking } from '../api/booking.js'
 import { useAuth } from '../context/AuthContext'
@@ -174,9 +174,6 @@ const BookingEditing = () => {
           <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">
             Управление бронированиями
           </h1>
-          <p className="text-gray-600 dark:text-gray-200">
-            Просмотр и отмена бронирований
-          </p>
         </div>
 
         {error && (

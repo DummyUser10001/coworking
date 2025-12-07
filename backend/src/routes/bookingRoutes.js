@@ -5,7 +5,7 @@ import { calculateRefund } from '../refundCalculation.js'
 
 const router = express.Router()
 
-// GET /bookings - получить все бронирования пользователя
+// GET bookings - получить все бронирования пользователя
 router.get('/', async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
@@ -67,7 +67,7 @@ router.get('/:id', async (req, res) => {
             basePricePerMonth: true
           }
         },
-        payment: true // Добавляем платеж
+        payment: true
       }
     })
    
@@ -109,7 +109,7 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Workstation not found' })
     }
 
-    // ПРОВЕРКА ДОСТУПНОСТИ НА ВЕСЬ ПЕРИОД
+    // проверка доступности на весь период
     const existingBooking = await prisma.booking.findFirst({
       where: {
         workstationId,
@@ -136,7 +136,7 @@ router.post('/', async (req, res) => {
       })
     }
 
-    // Проверяем цены (опционально)
+    // Проверяем цены
     let expectedBasePrice
     switch (bookingDuration) {
       case 'day': expectedBasePrice = workstation.basePricePerDay; break
@@ -258,9 +258,7 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// PUT /bookings/:id/cancel - отменить бронирование (универсальный роут)
-// PUT /bookings/:id/cancel - отменить бронирование
-// PUT /bookings/:id/cancel — отменить бронь (работает даже если уже началась)
+// PUT /bookings/:id/cancel — отменить бронь 
 router.put('/:id/cancel', async (req, res) => {
   const { id } = req.params;
 
@@ -283,14 +281,14 @@ router.put('/:id/cancel', async (req, res) => {
     const startTime = new Date(booking.startTime);
     const endTime = new Date(booking.endTime);
 
-    // Запрещаем отмену только если бронь УЖЕ ЗАКОНЧИЛАСЬ
+    // Запрещаем отмену только если бронь уже закончилась
     if (endTime <= now) {
       return res.status(400).json({ error: 'Бронь уже завершена — отмена невозможна' });
     }
 
     const cancelledBy = isManager ? 'manager' : 'user';
 
-    // ←←← ВАЖНО: гарантируем, что refund всегда имеет refundAmount
+    // гарантируем, что refund всегда имеет refundAmount
     let refundResult;
     try {
       refundResult = calculateRefund(booking, now, cancelledBy);
@@ -395,7 +393,6 @@ router.get('/check-availability/:workstationId', async (req, res) => {
   }
 })
 
-// POST /bookings/calculate-price - рассчитать стоимость со скидками
 // POST /bookings/calculate-price - рассчитать стоимость со скидками
 router.post('/calculate-price', async (req, res) => {
   const { workstationId, bookingDuration, startTime } = req.body;

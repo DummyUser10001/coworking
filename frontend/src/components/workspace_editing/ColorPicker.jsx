@@ -1,4 +1,4 @@
-// frontend\src\components\workspace_editing\ColorPicker.jsx
+
 import React, { useState, useEffect, useRef } from 'react'
 
 const ColorPicker = ({ color, onChange }) => {
@@ -45,7 +45,6 @@ const ColorPicker = ({ color, onChange }) => {
 
   return (
     <div className="relative" ref={pickerRef}>
-      {/* Квадратик цвета - кнопка для открытия пикера */}
       <button
         className="w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-500 shadow-sm hover:scale-110 transition-transform cursor-pointer"
         style={{ backgroundColor: color }}
@@ -53,7 +52,6 @@ const ColorPicker = ({ color, onChange }) => {
         title="Изменить цвет"
       />
       
-      {/* Выпадающий color picker */}
       {showPicker && (
         <div className="absolute left-0 top-8 z-50 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 w-48">
           <div className="grid grid-cols-5 gap-2">

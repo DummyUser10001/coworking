@@ -1,4 +1,4 @@
-// frontend/src/api/users.js
+
 const API_URL = import.meta.env.VITE_API_URL
 
 // Получить всех пользователей
@@ -122,14 +122,14 @@ export const getRoleNames = () => ({
   ADMIN: 'Администратор'
 })
 
-// frontend/src/api/users.js
+
 
 export const validateUserData = (data) => {
   const errors = {}
   
   if (!data.email?.trim()) errors.email = 'Email обязателен'
   
-  // Пароль обязателен ТОЛЬКО при создании нового пользователя (когда нет id)
+  // Пароль обязателен только при создании нового пользователя (когда нет id)
   if (!data.id && !data.password?.trim()) {
     errors.password = 'Пароль обязателен'
   }

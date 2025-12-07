@@ -1,4 +1,3 @@
-// frontend/src/pages/InventoryEditing.jsx
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
@@ -41,12 +40,6 @@ const InventoryEditing = () => {
         return
       }
 
-      // Дополнительная проверка роли перед загрузкой данных
-      if (user?.role !== 'MANAGER') {
-        setError('Доступ запрещен')
-        return
-      }
-
       const inventoryData = await getAllInventory(token)
       setInventory(inventoryData)
       
@@ -59,13 +52,8 @@ const InventoryEditing = () => {
   }
 
   useEffect(() => {
-    // Не загружаем данные если пользователь не менеджер
-    if (user?.role !== 'MANAGER') {
-      return
-    }
-    
     loadData()
-  }, [token, user])
+  }, [token])
 
   const handleEdit = (item) => {
     setEditingItem(item)
@@ -78,34 +66,20 @@ const InventoryEditing = () => {
   }
 
   const handleDelete = async (itemId) => {
-    if (window.confirm('Вы уверены, что хотите удалить этот инвентарь?')) {
       try {
-        if (!token) {
-          alert('Требуется авторизация')
-          return
-        }
         await deleteInventoryItem(itemId, token)
         await loadData()
       } catch (err) {
         console.error('Error deleting inventory item:', err)
-        alert('Не удалось удалить инвентарь')
       }
-    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    if (!token) {
-      alert('Требуется авторизация')
-      return
-    }
 
-    // Дополнительная проверка роли
-    if (user?.role !== 'MANAGER') {
-      alert('Доступ запрещен')
-      return
-    }
+    console.log('Submitting form with data:', formData)
+    console.log('Token:', token)
+    console.log('Editing item:', editingItem)
 
     // Валидация на клиенте
     const validation = validateInventoryData({
@@ -115,19 +89,32 @@ const InventoryEditing = () => {
     })
     
     if (!validation.isValid) {
-      alert('Пожалуйста, исправьте ошибки в форме: ' + Object.values(validation.errors).join(', '))
       return
     }
 
     try {
       const itemData = {
         type: formData.type,
-        workstationId: null, // Всегда общий инвентарь
+        workstationId: null,
         description: formData.description || null,
         totalQuantity: parseInt(formData.totalQuantity),
         reservedQuantity: editingItem ? editingItem.reservedQuantity : 0
       }
 
+      console.log('Sending item data:', itemData)
+
+      // ВАЖНО: Выбор между созданием и редактированием
+      if (editingItem) {
+        // Редактирование существующего инвентаря
+        console.log('Updating inventory item with ID:', editingItem.id)
+        await updateInventoryItem(editingItem.id, itemData, token)
+      } else {
+        // Создание нового инвентаря
+        console.log('Creating new inventory item')
+        await createInventoryItem(itemData, token)
+      }
+
+      // Закрытие модалки и сброс формы
       setShowModal(false)
       setEditingItem(null)
       setFormData({
@@ -136,10 +123,11 @@ const InventoryEditing = () => {
         totalQuantity: 1
       })
 
+      // Перезагрузка списка инвентаря
       await loadData()
+      
     } catch (err) {
       console.error('Error saving inventory item:', err)
-      alert(err.message || 'Не удалось сохранить инвентарь')
     }
   }
 
@@ -163,12 +151,6 @@ const InventoryEditing = () => {
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
             Управление инвентарем
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Создавайте и редактируйте общий инвентарь
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Доступно только для менеджеров
-          </p>
         </div>
 
         {error && (
@@ -211,45 +193,60 @@ const InventoryEditing = () => {
                     <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Тип</th>
                     <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Описание</th>
                     <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Общее количество</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Занято</th>
+                    <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Доступно</th>
                     <th className="text-left py-4 px-4 text-gray-600 dark:text-gray-300 font-semibold">Действия</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {inventory.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <td className="py-4 px-4">
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm font-medium">
-                          {formatType(item.type)}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-                          {item.description || '—'}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-gray-800 dark:text-white">
-                          {item.totalQuantity} шт.
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors"
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm transition-colors"
-                          >
-                            Удалить
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {inventory.map((item) => {
+                    const available = item.totalQuantity - item.reservedQuantity
+                    return (
+                      <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td className="py-4 px-4">
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm font-medium">
+                            {formatType(item.type)}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
+                            {item.description || '—'}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-medium text-gray-800 dark:text-white">
+                            {item.totalQuantity} шт.
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className={`font-medium ${item.reservedQuantity > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500'}`}>
+                            {item.reservedQuantity} шт.
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className={`font-medium ${available > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {available} шт.
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors"
+                            >
+                              Редактировать
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm transition-colors"
+                            >
+                              Удалить
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -323,14 +320,6 @@ const InventoryEditing = () => {
                     placeholder="Дополнительная информация об инвентаре..."
                   />
                 </div>
-
-                {editingItem && (
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      <strong>Внимание:</strong> При редактировании занятое количество ({editingItem.reservedQuantity} шт.) сохраняется автоматически.
-                    </p>
-                  </div>
-                )}
 
                 <div className="flex justify-end space-x-4 pt-6">
                   <button

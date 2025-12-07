@@ -1,8 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL
 
-// ===== РАБОЧИЕ МЕСТА =====
 
-// Получить все рабочие места (с фильтрацией по этажу)
+// Получить все рабочие места с фильтрацией по этажу
 export const getWorkstations = async (floorId = null, token) => {
   const url = floorId 
     ? `${API_URL}/workstations?floorId=${floorId}`
@@ -97,7 +96,6 @@ export const deleteWorkstation = async (id, token) => {
   return res.status === 204 ? {} : await res.json()
 }
 
-// ===== ОРИЕНТИРЫ =====
 
 // Получить все ориентиры (с фильтрацией по этажу)
 export const getLandmarks = async (floorId = null, token) => {

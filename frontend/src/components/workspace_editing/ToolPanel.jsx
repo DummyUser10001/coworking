@@ -1,10 +1,10 @@
-// frontend\src\components\workspace_editing\ToolPanel.jsx
+
 import React, { useEffect } from 'react'
 import ColorPicker from './ColorPicker'
 import { ImArrowRight } from "react-icons/im"
 
 const ToolPanel = ({
-  selectedTool, // Должно быть null по умолчанию
+  selectedTool, // null по умолчанию
   onToolSelect,
   colors,
   onColorChange,
@@ -164,7 +164,7 @@ const handleLandmarkSelect = (landmarkType) => {
         ))}
       </div>
 
-      {/* Ориентиры */}
+
       <div className="mb-6">
         <h3 className="font-semibold text-gray-800 dark:text-white mb-3">
           Ориентиры
@@ -208,7 +208,6 @@ const handleLandmarkSelect = (landmarkType) => {
         </div>
       </div>
 
-      {/* Сообщение о том, что инструмент не выбран */}
       {!selectedTool && (
         <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
           <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
@@ -217,7 +216,6 @@ const handleLandmarkSelect = (landmarkType) => {
         </div>
       )}
 
-      {/* Настройки этажа */}
       <div className="mb-6">
         <h3 className="font-semibold text-gray-800 dark:text-white mb-3">
           Настройки этажа

@@ -1,10 +1,7 @@
 import express from 'express'
 import prisma from '../prismaClient.js'
-//import authMiddleware from '../middleware/authMiddleware.js'
 
 const router = express.Router()
-
-//router.use(authMiddleware)
 
 // GET /floors - получить все этажи (с фильтрацией по коворкинг-центру)
 router.get('/', async (req, res) => {

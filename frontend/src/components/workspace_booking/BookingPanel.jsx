@@ -341,15 +341,6 @@ const BookingPanel = ({
               {selectedWorkstation.capacity} {selectedWorkstation.capacity === 1 ? 'человек' : 'человек'}
             </p>
           </div>
-
-          {(selectedWorkstation.type === 'MEETING_ROOM' || selectedWorkstation.type === 'CONFERENCE_ROOM') && (
-            <div>
-              <span className="text-gray-500 dark:text-gray-400 text-sm">Размер:</span>
-              <p className="text-gray-800 dark:text-white font-medium">
-                {selectedWorkstation.width} × {selectedWorkstation.height} клеток
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Выбор длительности с ценами */}

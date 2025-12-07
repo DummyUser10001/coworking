@@ -1,4 +1,3 @@
-// backend/src/routes/coworkingCenterRoutes.js
 import express from 'express'
 import prisma from '../prismaClient.js'
 

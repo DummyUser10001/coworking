@@ -1,4 +1,3 @@
-// backend/src/routes/usersRoutes.js
 import express from 'express'
 import prisma from '../prismaClient.js'
 import bcrypt from 'bcryptjs'

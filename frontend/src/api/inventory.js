@@ -1,63 +1,63 @@
 const API_URL = import.meta.env.VITE_API_URL
 
-// ==================== ОСНОВНЫЕ ОПЕРАЦИИ С ИНВЕНТАРЕМ ====================
 
 export const getAllInventory = async (token) => {
   const response = await fetch(`${API_URL}/inventory-items`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch inventory')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to fetch inventory')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch inventory`)
+    }
   }
   return response.json()
 }
 
 export const getInventoryByWorkstation = async (workstationId, token) => {
   const response = await fetch(`${API_URL}/inventory-items/workstation/${workstationId}`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch inventory for workstation')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to fetch inventory for workstation')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch inventory for workstation`)
+    }
   }
   return response.json()
 }
 
 export const getInventoryByType = async (type, token) => {
   const response = await fetch(`${API_URL}/inventory-items/type/${type}`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch inventory by type')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to fetch inventory by type')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch inventory by type`)
+    }
   }
   return response.json()
 }
 
-export const getGeneralInventory = async (token) => {
-  const response = await fetch(`${API_URL}/inventory-items/available/general`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-  })
-  if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch general inventory')
-  }
-  return response.json()
-}
-
-/** Доступный инвентарь (не привязан + есть свободные единицы) */
+// Доступный инвентарь
 export const getAvailableInventory = async (token) => {
   try {
     const response = await fetch(`${API_URL}/inventory-items/available`, {
       headers: { 
-        Authorization: `Bearer ${token}`, 
+        Authorization: token, 
         'Content-Type': 'application/json' 
       }
     })
     
     if (!response.ok) {
-      // Если 404 - это нормально, значит нет доступного инвентаря
+      // нет доступного инвентаря
       if (response.status === 404) {
         console.log('No available inventory found - returning empty array')
         return []
@@ -80,17 +80,21 @@ export const getAvailableInventory = async (token) => {
       return []
     }
     
-    throw error // Пробрасываем другие ошибки
+    throw error 
   }
 }
 
 export const getInventoryItem = async (itemId, token) => {
   const response = await fetch(`${API_URL}/inventory-items/${itemId}`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch inventory item')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to fetch inventory item')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch inventory item`)
+    }
   }
   return response.json()
 }
@@ -98,18 +102,22 @@ export const getInventoryItem = async (itemId, token) => {
 export const createInventoryItem = async (itemData, token) => {
   const response = await fetch(`${API_URL}/inventory-items`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: token, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      workstationId: itemData.workstationId,
+      workstationId: itemData.workstationId || null,
       type: itemData.type,
-      description: itemData.description,
+      description: itemData.description || null,
       totalQuantity: itemData.totalQuantity || 1,
       reservedQuantity: itemData.reservedQuantity || 0
     })
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to create inventory item')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to create inventory item')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to create inventory item`)
+    }
   }
   return response.json()
 }
@@ -117,12 +125,16 @@ export const createInventoryItem = async (itemData, token) => {
 export const updateInventoryItem = async (itemId, updateData, token) => {
   const response = await fetch(`${API_URL}/inventory-items/${itemId}`, {
     method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: token, 'Content-Type': 'application/json' },
     body: JSON.stringify(updateData)
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to update inventory item')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to update inventory item')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to update inventory item`)
+    }
   }
   return response.json()
 }
@@ -134,12 +146,16 @@ export const updateInventoryQuantity = async (itemId, totalQuantity, reservedQua
 
   const response = await fetch(`${API_URL}/inventory-items/${itemId}/quantity`, {
     method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: token, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to update inventory quantity')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to update inventory quantity')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to update inventory quantity`)
+    }
   }
   return response.json()
 }
@@ -147,12 +163,16 @@ export const updateInventoryQuantity = async (itemId, totalQuantity, reservedQua
 export const updateInventoryWorkstation = async (itemId, workstationId, token) => {
   const response = await fetch(`${API_URL}/inventory-items/${itemId}/workstation`, {
     method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ workstationId: workstationId || null })
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to update inventory workstation')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to update inventory workstation')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to update inventory workstation`)
+    }
   }
   return response.json()
 }
@@ -160,24 +180,39 @@ export const updateInventoryWorkstation = async (itemId, workstationId, token) =
 export const deleteInventoryItem = async (itemId, token) => {
   const response = await fetch(`${API_URL}/inventory-items/${itemId}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
+  
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to delete inventory item')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to delete inventory item')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to delete inventory item`)
+    }
   }
-  return response.status === 204 ? { success: true } : response.json()
+  
+  // Для статуса 204 возвращаем успех без парсинга JSON
+  if (response.status === 204) {
+    return { success: true }
+  }
+  
+  return response.json()
 }
 
-// ==================== СТАТИСТИКА И АНАЛИТИКА ====================
+// статистика и аналитика
 
 export const getInventoryStats = async (token) => {
   const response = await fetch(`${API_URL}/inventory-items/stats/summary`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch inventory statistics')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to fetch inventory statistics')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch inventory statistics`)
+    }
   }
   return response.json()
 }
@@ -188,16 +223,20 @@ export const getInventoryWithFilters = async (filters = {}, token) => {
   if (filters.type) params.append('type', filters.type)
 
   const response = await fetch(`${API_URL}/inventory-items?${params}`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: { Authorization: token, 'Content-Type': 'application/json' }
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to fetch filtered inventory')
+    try {
+      const err = await response.json()
+      throw new Error(err.error || 'Failed to fetch filtered inventory')
+    } catch (jsonError) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch filtered inventory`)
+    }
   }
   return response.json()
 }
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+// вспомогательные функции
 
 export const getInventoryTypes = () => [
   'MONITOR', 'PROJECTOR', 'WHITEBOARD', 'MICROPHONE', 'SPEAKERS', 'TABLE', 'LAPTOP'

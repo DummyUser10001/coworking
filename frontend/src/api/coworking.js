@@ -1,7 +1,7 @@
-// frontend/src/api/coworking.js
+
 const API_URL = import.meta.env.VITE_API_URL
 
-// ===== КОВОРКИНГ-ЦЕНТРЫ =====
+
 
 // Получить все активные коворкинг-центры (для пользователей)
 export const getCoworkingCenters = async (token) => {
@@ -112,7 +112,7 @@ export const deleteCoworkingCenter = async (id, token) => {
   return res.status === 204 ? {} : await res.json()
 }
 
-// ===== ЭТАЖИ =====
+// этажи
 
 // Получить все этажи (с фильтрацией по коворкинг-центру)
 export const getFloors = async (coworkingCenterId = null, token) => {

@@ -1,6 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL
 
-// ==================== КЛИЕНТСКИЕ ОПЕРАЦИИ (требуют аутентификации) ====================
 
 // Создать бронирование с проверкой доступности
 export const createBooking = async (bookingData, token) => {
@@ -83,7 +82,7 @@ export const getBooking = async (bookingId, token) => {
   }
 }
 
-// Отменить бронирование (универсальный роут - для клиентов и менеджеров)
+// Отменить бронирование для клиентов и менеджеров
 export const cancelBooking = async (bookingId, token) => {
   const r = await fetch(`${API_URL}/bookings/${bookingId}/cancel`, {
     method: 'PUT',
@@ -102,10 +101,10 @@ export const cancelBooking = async (bookingId, token) => {
   return data;
 };
 
-// Проверить доступность рабочего места с улучшенной обработкой ошибок
+// Проверить доступность рабочего места
 export const checkAvailability = async (workstationId, startTime, endTime, token, excludeBookingId = null) => {
   try {
-    // Улучшенная валидация дат
+    // валидация дат
     if (!workstationId) {
       throw new Error('Workstation ID is required')
     }
@@ -204,7 +203,6 @@ export const updateBooking = async (bookingId, updateData, token) => {
 }
 
 // Рассчитать стоимость со скидками
-// Рассчитать стоимость со скидками
 export const calculateBookingPrice = async (workstationId, bookingDuration, startTime, token) => {
   try {
     // Валидация входных данных
@@ -238,10 +236,8 @@ export const calculateBookingPrice = async (workstationId, bookingDuration, star
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      // Если ошибка "Invalid base price", возвращаем базовую цену без скидок
       if (errorData.error === 'Invalid base price') {
         console.warn('Invalid base price for workstation, returning base price without discounts');
-        // Здесь мы вернем базовую цену позже, после получения информации о рабочем месте
         throw new Error('INVALID_BASE_PRICE');
       }
       
@@ -262,14 +258,16 @@ export const calculateBookingPrice = async (workstationId, bookingDuration, star
     
     // Если ошибка связана с невалидной базовой ценой, пробуем получить базовую цену другим способом
     if (error.message === 'INVALID_BASE_PRICE') {
-      // Мы обработаем это в компоненте
       throw error;
     }
     
     throw new Error(error.message || 'Failed to calculate price');
   }
 }
-// ==================== ОПЕРАЦИИ ДЛЯ АДМИНИСТРАТОРОВ КОВОРКИНГ-ЦЕНТРОВ ====================
+
+
+
+// операции админа
 
 // Получить бронирования для коворкинг-центра на определенную дату
 export const getBookingsByCoworkingAndDate = async (coworkingCenterId, date, token) => {

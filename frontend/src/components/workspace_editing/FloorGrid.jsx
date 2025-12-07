@@ -65,8 +65,7 @@ const FloorGrid = ({
     return borders
   }
 
-// frontend\src\components\workspace_editing\FloorGrid.jsx
-// frontend\src\components\workspace_editing\FloorGrid.jsx
+
 const handleCellClick = (x, y, event) => {
   if (event.button === 2) {
     event.preventDefault()
@@ -80,13 +79,13 @@ const handleCellClick = (x, y, event) => {
 
   if (event.button !== 0) return
 
-  // Обработка ориентиров - УПРОЩЕННАЯ И ИСПРАВЛЕННАЯ ВЕРСИЯ
+  // Обработка ориентиров
   if (selectedTool === 'LANDMARK_ENTRANCE') {
     if (isCellOccupied(x, y)) {
       alert('Клетка уже занята')
       return
     }
-    console.log('Creating ENTRANCE landmark at:', x, y) // ДЛЯ ОТЛАДКИ
+    console.log('Creating ENTRANCE landmark at:', x, y) 
     onAddLandmark(x, y, 'ENTRANCE')
     return
   }
@@ -101,7 +100,6 @@ const handleCellClick = (x, y, event) => {
     return
   }
 
-  // ... остальной код для рабочих мест и комнат
 
     if (['MEETING_ROOM', 'CONFERENCE_ROOM'].includes(selectedTool)) {
       if (!selection.selecting) {
@@ -253,14 +251,12 @@ const handleCellClick = (x, y, event) => {
                   </>
                 )}
 
-                {/* ГРАНИЦЫ СУЩЕСТВУЮЩИХ КОМНАТ */}
                 {room && (
                   <>
                     <div
                       className="absolute inset-0 cursor-pointer z-10"
                       onClick={(e) => { e.stopPropagation(); onWorkstationClick(room) }}
                     >
-                      {/* Отображаем номер комнаты только в левом верхнем углу */}
                       {x === room.x && y === room.y && (
                         <div className="absolute top-1 left-1 text-xs font-bold text-gray-800 dark:text-gray-200 z-20">
                           {room.number}
@@ -268,7 +264,6 @@ const handleCellClick = (x, y, event) => {
                       )}
                     </div>
                     
-                    {/* Рамка комнаты */}
                     <div
                       className="absolute pointer-events-none"
                       style={{
@@ -285,7 +280,6 @@ const handleCellClick = (x, y, event) => {
                   </>
                 )}
 
-                {/* РАБОЧИЕ МЕСТА */}
                 {workstation && (
                   <div
                     className={`w-10 h-10 rounded flex items-center justify-center text-white text-xs font-medium`}
@@ -296,7 +290,6 @@ const handleCellClick = (x, y, event) => {
                   </div>
                 )}
 
-                {/* ОРИЕНТИРЫ */}
                 {landmark && (
                   <div
                     className="w-10 h-10 rounded flex items-center justify-center"
