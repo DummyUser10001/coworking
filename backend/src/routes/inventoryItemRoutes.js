@@ -1,32 +1,15 @@
 import express from 'express'
-import prisma from '../prismaClient.js'
+import { InventoryService } from '../services/inventoryService.js'
 
 const router = express.Router()
+const inventoryService = new InventoryService()
 
-
-// GET /inventory-items - получить весь инвентарь (с фильтрацией по рабочему месту и типу)
 router.get('/', async (req, res) => {
+  /* #swagger.summary = 'Получить весь инвентарь (с фильтрацией по рабочему месту и типу)' */
   const { workstationId, type } = req.query
 
   try {
-    const where = {}
-    if (workstationId) where.workstationId = workstationId
-    if (type) where.type = type
-
-    const inventory = await prisma.inventoryItem.findMany({
-      where,
-      include: {
-        workstation: {
-          include: {
-            floor: {
-              include: { coworkingCenter: true }
-            }
-          }
-        }
-      },
-      orderBy: { type: 'asc' }
-    })
-
+    const inventory = await inventoryService.getAllInventory(workstationId, type)
     res.json(inventory)
   } catch (error) {
     console.error('Error fetching inventory items:', error)
@@ -34,19 +17,10 @@ router.get('/', async (req, res) => {
   }
 })
 
-
-// GET /inventory-items/available
 router.get('/available', async (req, res) => {
+  /* #swagger.summary = 'Получить доступный инвентарь' */
   try {
-    const availableInventory = await prisma.inventoryItem.findMany({
-      where: {
-        workstationId: null,
-        reservedQuantity: { 
-          lt: prisma.inventoryItem.fields.totalQuantity 
-        }
-      },
-      orderBy: { type: 'asc' }
-    })
+    const availableInventory = await inventoryService.getAvailableInventory()
 
     // Если нет доступного инвентаря - возвращаем 404
     if (availableInventory.length === 0) {
@@ -63,25 +37,12 @@ router.get('/available', async (req, res) => {
   }
 })
 
-// GET /inventory-items/workstation/:workstationId
 router.get('/workstation/:workstationId', async (req, res) => {
+  /* #swagger.summary = 'Получить инвентарь для конкретного рабочего места (комнаты)' */
   const { workstationId } = req.params
 
   try {
-    const inventory = await prisma.inventoryItem.findMany({
-      where: { workstationId },
-      include: {
-        workstation: {
-          include: {
-            floor: {
-              include: { coworkingCenter: true }
-            }
-          }
-        }
-      },
-      orderBy: { type: 'asc' }
-    })
-
+    const inventory = await inventoryService.getInventoryByWorkstation(workstationId)
     res.json(inventory)
   } catch (error) {
     console.error('Error fetching inventory for workstation:', error)
@@ -89,25 +50,12 @@ router.get('/workstation/:workstationId', async (req, res) => {
   }
 })
 
-// GET /inventory-items/type/:type
 router.get('/type/:type', async (req, res) => {
+  /* #swagger.summary = 'Получить инвентарь по его типу' */
   const { type } = req.params
 
   try {
-    const inventory = await prisma.inventoryItem.findMany({
-      where: { type },
-      include: {
-        workstation: {
-          include: {
-            floor: {
-              include: { coworkingCenter: true }
-            }
-          }
-        }
-      },
-      orderBy: { workstationId: 'asc' }
-    })
-
+    const inventory = await inventoryService.getInventoryByType(type)
     res.json(inventory)
   } catch (error) {
     console.error('Error fetching inventory by type:', error)
@@ -115,284 +63,165 @@ router.get('/type/:type', async (req, res) => {
   }
 })
 
-// GET /inventory-items/:id
 router.get('/:id', async (req, res) => {
+  /* #swagger.summary = 'Получить конкретный инвентарь' */
   const { id } = req.params
 
   try {
-    const item = await prisma.inventoryItem.findUnique({
-      where: { id },
-      include: {
-        workstation: {
-          include: {
-            floor: {
-              include: { coworkingCenter: true }
-            }
-          }
-        }
-      }
-    })
-
-    if (!item) return res.status(404).json({ error: 'Inventory item not found' })
+    const item = await inventoryService.getInventoryById(id)
     res.json(item)
   } catch (error) {
     console.error('Error fetching inventory item:', error)
-    res.status(500).json({ error: 'Failed to fetch inventory item' })
+    
+    if (error.message === 'Inventory item not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to fetch inventory item' })
+    }
   }
 })
 
-// POST /inventory-items
 router.post('/', async (req, res) => {
+  /* #swagger.summary = 'Создать инвентарь' */
   const { workstationId, type, description, totalQuantity, reservedQuantity } = req.body
 
-  if (!type) return res.status(400).json({ error: 'Type is required' })
-
-  const validTypes = ['MONITOR', 'PROJECTOR', 'WHITEBOARD', 'MICROPHONE', 'SPEAKERS', 'TABLE', 'LAPTOP']
-  if (!validTypes.includes(type)) return res.status(400).json({ error: 'Invalid inventory type' })
-
-  const quantity = totalQuantity ?? 1
-  if (quantity < 1) return res.status(400).json({ error: 'Total quantity must be at least 1' })
-
-  const reserved = reservedQuantity ?? 0
-  if (reserved < 0) return res.status(400).json({ error: 'Reserved quantity cannot be negative' })
-  if (reserved > quantity) return res.status(400).json({ error: 'Reserved quantity cannot exceed total quantity' })
-
   try {
-    if (workstationId) {
-      const ws = await prisma.workstation.findUnique({ where: { id: workstationId } })
-      if (!ws) return res.status(404).json({ error: 'Workstation not found' })
-    }
-
-    const item = await prisma.inventoryItem.create({
-      data: {
-        workstationId: workstationId || null,
-        type,
-        description: description || null,
-        totalQuantity: quantity,
-        reservedQuantity: reserved
-      },
-      include: {
-        workstation: {
-          include: {
-            floor: { include: { coworkingCenter: true } }
-          }
-        }
-      }
+    const item = await inventoryService.createInventoryItem({
+      workstationId,
+      type,
+      description,
+      totalQuantity,
+      reservedQuantity
     })
 
     res.status(201).json(item)
   } catch (error) {
     console.error('Error creating inventory item:', error)
+    
+    if (error.message.includes('required') || 
+        error.message.includes('Invalid') || 
+        error.message.includes('must be') ||
+        error.message.includes('cannot')) {
+      return res.status(400).json({ error: error.message })
+    }
+    
     if (error.code === 'P2003') return res.status(400).json({ error: 'Invalid workstation ID' })
     res.status(500).json({ error: 'Failed to create inventory item' })
   }
 })
 
-// PUT /inventory-items/:id
 router.put('/:id', async (req, res) => {
+  /* #swagger.summary = 'Обновить данные инвентаря' */
   const { id } = req.params
   const { workstationId, type, description, totalQuantity, reservedQuantity } = req.body
 
   try {
-    const existing = await prisma.inventoryItem.findUnique({ where: { id } })
-    if (!existing) return res.status(404).json({ error: 'Inventory item not found' })
-
-    if (type) {
-      const validTypes = ['MONITOR', 'PROJECTOR', 'WHITEBOARD', 'MICROPHONE', 'SPEAKERS', 'TABLE', 'LAPTOP']
-      if (!validTypes.includes(type)) return res.status(400).json({ error: 'Invalid inventory type' })
-    }
-
-    let finalTotal = existing.totalQuantity
-    if (totalQuantity !== undefined) {
-      if (totalQuantity < 1) return res.status(400).json({ error: 'Total quantity must be at least 1' })
-      finalTotal = totalQuantity
-    }
-
-    let finalReserved = existing.reservedQuantity
-    if (reservedQuantity !== undefined) {
-      if (reservedQuantity < 0) return res.status(400).json({ error: 'Reserved quantity cannot be negative' })
-      if (reservedQuantity > finalTotal) return res.status(400).json({ error: 'Reserved quantity cannot exceed total quantity' })
-      finalReserved = reservedQuantity
-    }
-
-    if (workstationId !== undefined && workstationId) {
-      const ws = await prisma.workstation.findUnique({ where: { id: workstationId } })
-      if (!ws) return res.status(404).json({ error: 'Workstation not found' })
-    }
-
-    const item = await prisma.inventoryItem.update({
-      where: { id },
-      data: {
-        ...(workstationId !== undefined && { workstationId: workstationId || null }),
-        ...(type && { type }),
-        ...(description !== undefined && { description: description || null }),
-        totalQuantity: finalTotal,
-        reservedQuantity: finalReserved
-      },
-      include: {
-        workstation: {
-          include: {
-            floor: { include: { coworkingCenter: true } }
-          }
-        }
-      }
+    const item = await inventoryService.updateInventoryItem(id, {
+      workstationId,
+      type,
+      description,
+      totalQuantity,
+      reservedQuantity
     })
 
     res.json(item)
   } catch (error) {
     console.error('Error updating inventory item:', error)
-    if (error.code === 'P2003') return res.status(400).json({ error: 'Invalid workstation ID' })
-    if (error.code === 'P2025') return res.status(404).json({ error: 'Inventory item not found' })
-    res.status(500).json({ error: 'Failed to update inventory item' })
+    
+    if (error.message === 'Inventory item not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message.includes('Invalid') || 
+               error.message.includes('must be') ||
+               error.message.includes('cannot')) {
+      res.status(400).json({ error: error.message })
+    } else if (error.code === 'P2003') {
+      res.status(400).json({ error: 'Invalid workstation ID' })
+    } else if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Inventory item not found' })
+    } else {
+      res.status(500).json({ error: 'Failed to update inventory item' })
+    }
   }
 })
 
-// PATCH /inventory-items/:id/quantity
 router.patch('/:id/quantity', async (req, res) => {
+  /* #swagger.summary = 'Обновляет количество инвентаря' */
   const { id } = req.params
   const { totalQuantity, reservedQuantity } = req.body
 
   try {
-    const existing = await prisma.inventoryItem.findUnique({ where: { id } })
-    if (!existing) return res.status(404).json({ error: 'Inventory item not found' })
-
-    const updateData = {}
-
-    if (totalQuantity !== undefined) {
-      if (totalQuantity < 1) return res.status(400).json({ error: 'Total quantity must be at least 1' })
-      updateData.totalQuantity = totalQuantity
-      if (totalQuantity < existing.reservedQuantity) updateData.reservedQuantity = totalQuantity
-    }
-
-    if (reservedQuantity !== undefined) {
-      if (reservedQuantity < 0) return res.status(400).json({ error: 'Reserved quantity cannot be negative' })
-      const max = totalQuantity !== undefined ? totalQuantity : existing.totalQuantity
-      if (reservedQuantity > max) return res.status(400).json({ error: 'Reserved quantity cannot exceed total quantity' })
-      updateData.reservedQuantity = reservedQuantity
-    }
-
-    const item = await prisma.inventoryItem.update({
-      where: { id },
-      data: updateData,
-      include: {
-        workstation: {
-          include: {
-            floor: { include: { coworkingCenter: true } }
-          }
-        }
-      }
-    })
-
+    const item = await inventoryService.updateInventoryQuantity(id, totalQuantity, reservedQuantity)
     res.json(item)
   } catch (error) {
     console.error('Error updating inventory quantity:', error)
-    if (error.code === 'P2025') return res.status(404).json({ error: 'Inventory item not found' })
-    res.status(500).json({ error: 'Failed to update inventory quantity' })
+    
+    if (error.message === 'Inventory item not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message.includes('must be') || error.message.includes('cannot')) {
+      res.status(400).json({ error: error.message })
+    } else if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Inventory item not found' })
+    } else {
+      res.status(500).json({ error: 'Failed to update inventory quantity' })
+    }
   }
 })
 
-// PATCH /inventory-items/:id/workstation
 router.patch('/:id/workstation', async (req, res) => {
+  /* #swagger.summary = 'Привязывает инвентарь к рабочему месту' */
   const { id } = req.params
   const { workstationId } = req.body
 
   try {
-    const existing = await prisma.inventoryItem.findUnique({ where: { id } })
-    if (!existing) return res.status(404).json({ error: 'Inventory item not found' })
-
-    if (workstationId) {
-      const ws = await prisma.workstation.findUnique({ where: { id: workstationId } })
-      if (!ws) return res.status(404).json({ error: 'Workstation not found' })
-
-      // Проверяем, есть ли свободные единицы
-      if (existing.reservedQuantity >= existing.totalQuantity) {
-        return res.status(400).json({ 
-          error: 'No available units', 
-          message: 'All units of this inventory item are already reserved' 
-        })
-      }
-    }
-
-    const updateData = { 
-      workstationId: workstationId || null 
-    }
-
-    // При добавлении в комнату увеличиваем reservedQuantity на 1
-    if (workstationId && !existing.workstationId) {
-      updateData.reservedQuantity = existing.reservedQuantity + 1
-    }
-    // При удалении из комнаты уменьшаем reservedQuantity на 1
-    else if (!workstationId && existing.workstationId) {
-      updateData.reservedQuantity = Math.max(0, existing.reservedQuantity - 1)
-    }
-
-    const item = await prisma.inventoryItem.update({
-      where: { id },
-      data: updateData,
-      include: {
-        workstation: {
-          include: {
-            floor: { include: { coworkingCenter: true } }
-          }
-        }
-      }
-    })
-
+    const item = await inventoryService.updateInventoryWorkstation(id, workstationId)
     res.json(item)
   } catch (error) {
     console.error('Error updating inventory workstation:', error)
-    if (error.code === 'P2003') return res.status(400).json({ error: 'Invalid workstation ID' })
-    if (error.code === 'P2025') return res.status(404).json({ error: 'Inventory item not found' })
-    res.status(500).json({ error: 'Failed to update inventory workstation' })
+    
+    if (error.message === 'Inventory item not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message === 'Workstation not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message === 'No available units') {
+      res.status(400).json({ 
+        error: error.message, 
+        message: 'All units of this inventory item are already reserved' 
+      })
+    } else if (error.code === 'P2003') {
+      res.status(400).json({ error: 'Invalid workstation ID' })
+    } else if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Inventory item not found' })
+    } else {
+      res.status(500).json({ error: 'Failed to update inventory workstation' })
+    }
   }
 })
 
-// DELETE /inventory-items/:id
 router.delete('/:id', async (req, res) => {
+  /* #swagger.summary = 'Удалить инвентарь' */
   const { id } = req.params
 
   try {
-    const existing = await prisma.inventoryItem.findUnique({ where: { id } })
-    if (!existing) return res.status(404).json({ error: 'Inventory item not found' })
-
-    await prisma.inventoryItem.delete({ where: { id } })
+    await inventoryService.deleteInventoryItem(id)
     res.status(204).send()
   } catch (error) {
     console.error('Error deleting inventory item:', error)
-    if (error.code === 'P2025') return res.status(404).json({ error: 'Inventory item not found' })
-    res.status(500).json({ error: 'Failed to delete inventory item' })
+    
+    if (error.message === 'Inventory item not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Inventory item not found' })
+    } else {
+      res.status(500).json({ error: 'Failed to delete inventory item' })
+    }
   }
 })
 
-// GET /inventory-items/stats/summary
 router.get('/stats/summary', async (req, res) => {
+  /* #swagger.summary = 'Получить статистику по инвентарю (общее количество, занятые/свободные единицы)' */
   try {
-    const totalItems = await prisma.inventoryItem.count()
-    const itemsByType = await prisma.inventoryItem.groupBy({
-      by: ['type'],
-      _sum: { totalQuantity: true, reservedQuantity: true },
-      _count: { id: true }
-    })
-    const generalCount = await prisma.inventoryItem.count({ where: { workstationId: null } })
-    const assignedCount = await prisma.inventoryItem.count({ where: { workstationId: { not: null } } })
-
-    const totalQuantity = itemsByType.reduce((s, i) => s + (i._sum.totalQuantity || 0), 0)
-    const totalReserved = itemsByType.reduce((s, i) => s + (i._sum.reservedQuantity || 0), 0)
-
-    res.json({
-      totalItems,
-      totalQuantity,
-      totalReserved,
-      availableQuantity: totalQuantity - totalReserved,
-      itemsByType: itemsByType.map(i => ({
-        type: i.type,
-        totalQuantity: i._sum.totalQuantity,
-        reservedQuantity: i._sum.reservedQuantity,
-        availableQuantity: (i._sum.totalQuantity || 0) - (i._sum.reservedQuantity || 0),
-        itemCount: i._count.id
-      })),
-      distribution: { general: generalCount, assigned: assignedCount }
-    })
+    const stats = await inventoryService.getInventoryStats()
+    res.json(stats)
   } catch (error) {
     console.error('Error fetching inventory stats:', error)
     res.status(500).json({ error: 'Failed to fetch inventory statistics' })

@@ -21,9 +21,9 @@ export const getCoworkingCenters = async (token) => {
   return await res.json()
 }
 
-// Получить все коворкинг-центры (включая неактивные - для админки)
+// Получить все коворкинг-центры (включая неактивные для менеджеров)
 export const getAllCoworkingCenters = async (token) => {
-  const res = await fetch(`${API_URL}/coworking-centers/admin/all`, {
+  const res = await fetch(`${API_URL}/coworking-centers/all`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

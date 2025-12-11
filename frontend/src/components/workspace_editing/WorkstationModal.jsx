@@ -572,7 +572,7 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                 onClick={() => setShowAddInventory(!showAddInventory)}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
               >
-                {showAddInventory ? 'Скрыть доступный инвентарь' : 'Добавить инвентарь'}
+                {showAddInventory ? 'Скрыть доступный инвентарь' : 'Показать доступный инвентарь'}
               </button>
             </div>
 
@@ -691,13 +691,6 @@ const WorkstationModal = ({ workstation, onSave, onClose, onDelete, token }) => 
                   <h5 className="font-medium text-gray-800 dark:text-gray-100">
                     Доступный инвентарь ({availableInventory.length})
                   </h5>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddInventory(false)}
-                    className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600 transition-colors"
-                  >
-                    Скрыть доступный инвентарь
-                  </button>
                 </div>
                 {availableInventory.length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">

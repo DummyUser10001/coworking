@@ -351,10 +351,10 @@ export const getWorkstationBookings = async (coworkingCenterId, workstationId, s
   }
 }
 
-// Получить все бронирования (для менеджеров/админов)
+// Получить все бронирования (для менеджеров)
 export const getAllBookings = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/bookings/admin/all`, {
+    const response = await fetch(`${API_URL}/bookings/all`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

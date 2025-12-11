@@ -1,25 +1,13 @@
 import express from 'express'
-import prisma from '../prismaClient.js'
+import { CoworkingService } from '../services/coworkingService.js'
 
 const router = express.Router()
+const coworkingService = new CoworkingService()
 
-// GET /coworking-centers - получить все коворкинг-центры
 router.get('/', async (req, res) => {
+  /* #swagger.summary = 'Получить все коворкинг-центры' */
   try {
-    const centers = await prisma.coworkingCenter.findMany({
-      where: {
-        isActive: true // Показываем только активные центры
-      },
-      include: {
-        floors: {
-          include: {
-            workstations: true,
-            landmarks: true
-          }
-        }
-      }
-    })
-    
+    const centers = await coworkingService.getAllCenters(true)
     res.json(centers)
   } catch (error) {
     console.error('Error fetching coworking centers:', error)
@@ -27,52 +15,10 @@ router.get('/', async (req, res) => {
   }
 })
 
-// GET /coworking-centers/:id - получить конкретный коворкинг-центр (включая неактивные)
-router.get('/:id', async (req, res) => {
-  const { id } = req.params
-
+router.get('/all', async (req, res) => {
+  /* #swagger.summary = 'Получить все центры (включая неактивные) для менеджеров' */
   try {
-    const center = await prisma.coworkingCenter.findUnique({
-      where: { id },
-      include: {
-        floors: {
-          include: {
-            workstations: {
-              include: {
-                inventory: true
-              }
-            },
-            landmarks: true
-          }
-        }
-      }
-    })
-    
-    if (!center) {
-      return res.status(404).json({ error: 'Coworking center not found' })
-    }
-    
-    res.json(center)
-  } catch (error) {
-    console.error('Error fetching coworking center:', error)
-    res.status(500).json({ error: 'Failed to fetch coworking center' })
-  }
-})
-
-// GET /coworking-centers/all - получить все центры (включая неактивные) для админки
-router.get('/admin/all', async (req, res) => {
-  try {
-    const centers = await prisma.coworkingCenter.findMany({
-      include: {
-        floors: {
-          include: {
-            workstations: true,
-            landmarks: true
-          }
-        }
-      }
-    })
-    
+    const centers = await coworkingService.getAllCenters(false)
     res.json(centers)
   } catch (error) {
     console.error('Error fetching all coworking centers:', error)
@@ -80,88 +26,88 @@ router.get('/admin/all', async (req, res) => {
   }
 })
 
-// POST /coworking-centers - создать новый коворкинг-центр
-router.post('/', async (req, res) => {
-  const { address, latitude, longitude, phone, email, openingTime, closingTime, amenities } = req.body
-
-  // Валидация amenities
-  if (amenities && Array.isArray(amenities)) {
-    const validAmenities = ['WIFI', 'PARKING', 'COFFEE', 'TEA', 'SNACKS', 'LOCKERS']
-    for (const amenity of amenities) {
-      if (!validAmenities.includes(amenity)) {
-        return res.status(400).json({ error: `Invalid amenity: ${amenity}` })
-      }
-    }
-  }
+router.get('/:id', async (req, res) => {
+  /* #swagger.summary = 'Получить конкретный коворкинг-центр' */
+  const { id } = req.params
 
   try {
-    const center = await prisma.coworkingCenter.create({
-      data: {
-        address,
-        latitude,
-        longitude,
-        phone,
-        email,
-        openingTime,
-        closingTime,
-        amenities: amenities || []
-      }
+    const center = await coworkingService.getCenterById(id)
+    res.json(center)
+  } catch (error) {
+    console.error('Error fetching coworking center:', error)
+    
+    if (error.message === 'Coworking center not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to fetch coworking center' })
+    }
+  }
+})
+
+router.post('/', async (req, res) => {
+  /* #swagger.summary = 'Создать новый коворкинг-центр' */
+  const { address, latitude, longitude, phone, email, openingTime, closingTime, amenities } = req.body
+
+  try {
+    const center = await coworkingService.createCenter({
+      address,
+      latitude,
+      longitude,
+      phone,
+      email,
+      openingTime,
+      closingTime,
+      amenities
     })
     
     res.status(201).json(center)
   } catch (error) {
     console.error('Error creating coworking center:', error)
-    res.status(500).json({ error: 'Failed to create coworking center' })
+    
+    if (error.message.includes('Invalid amenity')) {
+      res.status(400).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to create coworking center' })
+    }
   }
 })
 
-// PUT /coworking-centers/:id - обновить коворкинг-центр
 router.put('/:id', async (req, res) => {
+  /* #swagger.summary = 'Обновить коворкинг-центр' */
   const { id } = req.params
   const { address, latitude, longitude, phone, email, openingTime, closingTime, amenities, isActive } = req.body
 
-  // Валидация amenities
-  if (amenities && Array.isArray(amenities)) {
-    const validAmenities = ['WIFI', 'PARKING', 'COFFEE', 'TEA', 'SNACKS', 'LOCKERS']
-    for (const amenity of amenities) {
-      if (!validAmenities.includes(amenity)) {
-        return res.status(400).json({ error: `Invalid amenity: ${amenity}` })
-      }
-    }
-  }
-
   try {
-    const center = await prisma.coworkingCenter.update({
-      where: { id },
-      data: {
-        address,
-        latitude,
-        longitude,
-        phone,
-        email,
-        openingTime,
-        closingTime,
-        amenities: amenities || [],
-        isActive
-      }
+    const center = await coworkingService.updateCenter(id, {
+      address,
+      latitude,
+      longitude,
+      phone,
+      email,
+      openingTime,
+      closingTime,
+      amenities,
+      isActive
     })
     
     res.json(center)
   } catch (error) {
     console.error('Error updating coworking center:', error)
-    res.status(500).json({ error: 'Failed to update coworking center' })
+    
+    if (error.message.includes('Invalid amenity')) {
+      res.status(400).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to update coworking center' })
+    }
   }
 })
 
-// DELETE /coworking-centers/:id - удалить коворкинг-центр
 router.delete('/:id', async (req, res) => {
+  /* #swagger.summary = 'Удалить коворкинг-центр' */
   const { id } = req.params
 
   try {
-    await prisma.coworkingCenter.delete({
-      where: { id }
-    })
-    
+    await coworkingService.deleteCenter(id)
     res.status(204).send()
   } catch (error) {
     console.error('Error deleting coworking center:', error)

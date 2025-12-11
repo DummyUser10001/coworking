@@ -459,7 +459,7 @@ const WorkspaceEditing = ({ theme }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-linear-to-br from-[#EAB7A1] via-white to-[#A1E1DE] dark:from-gray-900 dark:via-gray-800 dark:to-[#645391] transition-colors duration-300">
       <div className="container mx-auto px-6 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">

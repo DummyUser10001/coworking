@@ -1,39 +1,13 @@
 import express from 'express'
-import prisma from '../prismaClient.js'
-import calculateDiscountWithPriority from '../discountCalculation.js'
-import { calculateRefund } from '../refundCalculation.js'
+import { BookingService } from '../services/bookingService.js'
 
 const router = express.Router()
+const bookingService = new BookingService()
 
-// GET bookings - получить все бронирования пользователя
 router.get('/', async (req, res) => {
+  /* #swagger.summary = 'Получить все бронирования пользователя' */
   try {
-    const bookings = await prisma.booking.findMany({
-      where: {
-        userId: req.userId
-      },
-      include: {
-        coworkingCenter: {
-          select: {
-            id: true,
-            address: true
-          }
-        },
-        workstation: {
-          select: {
-            id: true,
-            number: true,
-            type: true,
-            capacity: true
-          }
-        },
-        payment: true // Добавляем платеж
-      },
-      orderBy: {
-        startTime: 'desc'
-      }
-    })
-   
+    const bookings = await bookingService.getUserBookings(req.userId)
     res.json(bookings)
   } catch (error) {
     console.error('Error fetching bookings:', error)
@@ -41,53 +15,43 @@ router.get('/', async (req, res) => {
   }
 })
 
-// GET /bookings/:id - получить конкретное бронирование
+router.get('/all', async (req, res) => {
+  /* #swagger.summary = 'Получить все бронирования (для менеджеров)' */
+  try {
+    const bookings = await bookingService.getAllBookings(req.userId);
+    res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching all bookings:', error);
+    
+    if (error.message === 'Access denied') {
+      res.status(403).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to fetch bookings' });
+    }
+  }
+});
+
 router.get('/:id', async (req, res) => {
+  /* #swagger.summary = 'Получить конкретное бронирование' */
   const { id } = req.params
   try {
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: {
-        coworkingCenter: {
-          select: {
-            id: true,
-            address: true,
-            phone: true,
-            email: true
-          }
-        },
-        workstation: {
-          select: {
-            id: true,
-            number: true,
-            type: true,
-            capacity: true,
-            basePricePerDay: true,
-            basePricePerWeek: true,
-            basePricePerMonth: true
-          }
-        },
-        payment: true
-      }
-    })
-   
-    if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' })
-    }
-    
-    if (booking.userId !== req.userId) {
-      return res.status(403).json({ error: 'Access denied' })
-    }
-   
+    const booking = await bookingService.getBookingById(id, req.userId)
     res.json(booking)
   } catch (error) {
     console.error('Error fetching booking:', error)
-    res.status(500).json({ error: 'Failed to fetch booking' })
+    
+    if (error.message === 'Booking not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message === 'Access denied') {
+      res.status(403).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to fetch booking' })
+    }
   }
 })
 
-// POST /bookings - создать новое бронирование
 router.post('/', async (req, res) => {
+  /* #swagger.summary = 'Создать новое бронирование' */
   const {
     coworkingCenterId,
     workstationId,
@@ -100,416 +64,129 @@ router.post('/', async (req, res) => {
   } = req.body
   
   try {
-    // Проверяем существование рабочего места
-    const workstation = await prisma.workstation.findUnique({
-      where: { id: workstationId }
+    const booking = await bookingService.createBooking(req.userId, {
+      coworkingCenterId,
+      workstationId,
+      startTime,
+      endTime,
+      bookingDuration,
+      basePrice,
+      discountPercentage,
+      finalPrice
     })
-
-    if (!workstation) {
-      return res.status(404).json({ error: 'Workstation not found' })
-    }
-
-    // проверка доступности на весь период
-    const existingBooking = await prisma.booking.findFirst({
-      where: {
-        workstationId,
-        OR: [
-          {
-            startTime: { lt: new Date(endTime) },
-            endTime: { gt: new Date(startTime) }
-          }
-        ],
-        status: {
-          in: ['ACTIVE']
-        }
-      }
-    })
-
-    if (existingBooking) {
+    
+    if (booking.error) {
       return res.status(409).json({ 
-        error: 'Workstation is not available for the selected period',
-        conflictingBooking: {
-          id: existingBooking.id,
-          startTime: existingBooking.startTime,
-          endTime: existingBooking.endTime
-        }
+        error: booking.error,
+        conflictingBooking: booking.conflictingBooking
       })
     }
-
-    // Проверяем цены
-    let expectedBasePrice
-    switch (bookingDuration) {
-      case 'day': expectedBasePrice = workstation.basePricePerDay; break
-      case 'week': expectedBasePrice = workstation.basePricePerWeek; break
-      case 'month': expectedBasePrice = workstation.basePricePerMonth; break
-      default: expectedBasePrice = workstation.basePricePerDay
-    }
-
-    if (Math.abs(basePrice - expectedBasePrice) > 0.01) {
-      console.warn('Base price mismatch. Frontend:', basePrice, 'Expected:', expectedBasePrice)
-    }
-
-    // 1. Сначала создаем платеж
-    const payment = await prisma.payment.create({
-      data: {
-        userId: req.userId,
-        basePrice: basePrice,
-        discountPercentage: discountPercentage,
-        finalPrice: finalPrice,
-        currency: "RUB",
-        status: 'COMPLETED'
-      }
-    })
-
-    // 2. Затем создаем бронирование с привязкой к платежу
-    const booking = await prisma.booking.create({
-      data: {
-        userId: req.userId,
-        coworkingCenterId,
-        workstationId,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        paymentId: payment.id, // Обязательная привязка
-        status: 'ACTIVE'
-      },
-      include: {
-        coworkingCenter: { select: { address: true } },
-        workstation: { select: { number: true, type: true } },
-        payment: true // Включаем информацию о платеже
-      }
-    })
-
-    console.log('Booking created with payment:', {
-      bookingId: booking.id,
-      paymentId: payment.id,
-      finalPrice: finalPrice
-    })
-
+    
     res.status(201).json(booking)
     
   } catch (error) {
     console.error('Error creating booking:', error)
     
-    // Если возникла ошибка после создания платежа, пытаемся его удалить
-    if (error.message.includes('payment')) {
-      try {
-        // Здесь нужно найти и удалить созданный платеж
-        // Но лучше использовать транзакцию в будущем
-      } catch (cleanupError) {
-        console.error('Error cleaning up payment:', cleanupError)
-      }
+    if (error.message === 'Workstation not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to create booking' })
     }
-    
-    res.status(500).json({ error: 'Failed to create booking' })
   }
 })
 
-// PUT /bookings/:id - обновить бронирование (только статус)
 router.put('/:id', async (req, res) => {
+  /* #swagger.summary = 'Обновить статус бронирования' */
   const { id } = req.params
   const { status } = req.body
   try {
-    // Проверяем существование бронирования
-    const existingBooking = await prisma.booking.findUnique({
-      where: { id },
-      include: { payment: true }
-    })
-    
-    if (!existingBooking) {
-      return res.status(404).json({ error: 'Booking not found' })
-    }
-    
-    if (existingBooking.userId !== req.userId) {
-      return res.status(403).json({ error: 'Access denied' })
-    }
-    
-    // Обновляем только статус
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: { status },
-      include: {
-        coworkingCenter: {
-          select: {
-            address: true
-          }
-        },
-        workstation: {
-          select: {
-            number: true,
-            type: true
-          }
-        },
-        payment: true
-      }
-    })
-
-    // Если статус меняется на CANCELLED и есть оплата, обновляем статус платежа
-    if (status === 'CANCELLED' && existingBooking.payment) {
-      await prisma.payment.update({
-        where: { id: existingBooking.payment.id },
-        data: { status: 'REFUNDED' }
-      })
-    }
-   
+    const booking = await bookingService.updateBookingStatus(id, req.userId, status)
     res.json(booking)
   } catch (error) {
     console.error('Error updating booking:', error)
-    res.status(500).json({ error: 'Failed to update booking' })
+    
+    if (error.message === 'Booking not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message === 'Access denied') {
+      res.status(403).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to update booking' })
+    }
   }
 })
-
-// PUT /bookings/:id/cancel — отменить бронь 
+ 
 router.put('/:id/cancel', async (req, res) => {
+  /* #swagger.summary = 'Отменить бронь ' */
   const { id } = req.params;
 
   try {
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: { payment: true }
-    });
-
-    if (!booking) return res.status(404).json({ error: 'Бронь не найдена' });
-    if (booking.status === 'CANCELLED') return res.status(400).json({ error: 'Уже отменено' });
-
-    // Проверка прав
-    const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    const isManager = user.role === 'ADMIN' || user.role === 'MANAGER';
-    const isOwner = booking.userId === req.userId;
-    if (!isOwner && !isManager) return res.status(403).json({ error: 'Доступ запрещён' });
-
-    const now = new Date();
-    const startTime = new Date(booking.startTime);
-    const endTime = new Date(booking.endTime);
-
-    // Запрещаем отмену только если бронь уже закончилась
-    if (endTime <= now) {
-      return res.status(400).json({ error: 'Бронь уже завершена — отмена невозможна' });
-    }
-
-    const cancelledBy = isManager ? 'manager' : 'user';
-
-    // гарантируем, что refund всегда имеет refundAmount
-    let refundResult;
-    try {
-      refundResult = calculateRefund(booking, now, cancelledBy);
-    } catch (err) {
-      refundResult = { refundAmount: 0 }; // на всякий случай
-    }
-
-    const refundAmount = Number(refundResult.refundAmount) || 0;
-
-    // Обновляем бронь
-    await prisma.booking.update({
-      where: { id },
-      data: { status: 'CANCELLED' }
-    });
-
-    // Обновляем платёж — только если он был
-    if (booking.payment) {
-      await prisma.payment.update({
-        where: { id: booking.payment.id },
-        data: {
-          status: refundAmount > 0 ? 'REFUNDED' : 'COMPLETED',
-          refundAmount: refundAmount > 0 ? refundAmount : null // null если 0
-        }
-      });
-    }
-
-    // Формируем красивый ответ
-    const message = refundAmount > 0
-      ? (isManager
-          ? `Отменено менеджером. Возврат ${refundAmount}₽ (3–5 дней).`
-          : `Отменено. Возврат ${refundAmount}₽ (3–5 дней).`)
-      : 'Отменено. Возврат не предусмотрен.';
-
-    return res.json({
-      message,
-      cancelledBy,
-      refund: { refundAmount }
-    });
+    const result = await bookingService.cancelBooking(id, req.userId);
+    return res.json(result);
 
   } catch (error) {
     console.error('Ошибка при отмене брони:', error);
+    
+    if (error.message === 'Бронь не найдена') {
+      return res.status(404).json({ error: error.message })
+    }
+    if (error.message === 'Уже отменено') {
+      return res.status(400).json({ error: error.message })
+    }
+    if (error.message === 'Доступ запрещён') {
+      return res.status(403).json({ error: error.message })
+    }
+    if (error.message === 'Бронь уже завершена — отмена невозможна') {
+      return res.status(400).json({ error: error.message })
+    }
+    
     return res.status(500).json({ error: 'Ошибка сервера при отмене' });
   }
 });
 
-// GET /bookings/check-availability/:workstationId - проверить доступность рабочего места
 router.get('/check-availability/:workstationId', async (req, res) => {
+  /* #swagger.summary = 'Проверить доступность рабочего места' */
   const { workstationId } = req.params
   const { startTime, endTime, excludeBookingId } = req.query
 
   try {
-    const workstation = await prisma.workstation.findUnique({
-      where: { id: workstationId }
-    })
-
-    if (!workstation) {
-      return res.status(404).json({ error: 'Workstation not found' })
-    }
-
-    let whereClause = {
-      workstationId,
-      OR: [
-        {
-          startTime: { lt: new Date(endTime) },
-          endTime: { gt: new Date(startTime) }
-        }
-      ],
-      status: {
-        in: ['ACTIVE']
-      }
-    }
-
-    if (excludeBookingId) {
-      whereClause.NOT = {
-        id: excludeBookingId
-      }
-    }
-
-    const existingBooking = await prisma.booking.findFirst({
-      where: whereClause
-    })
-
-    const isAvailable = !existingBooking
-    
-    res.json({
-      isAvailable,
-      workstation: {
-        id: workstation.id,
-        number: workstation.number,
-        type: workstation.type,
-        capacity: workstation.capacity
-      },
-      conflictingBooking: existingBooking ? {
-        id: existingBooking.id,
-        startTime: existingBooking.startTime,
-        endTime: existingBooking.endTime
-      } : null
-    })
+    const result = await bookingService.checkAvailability(workstationId, startTime, endTime, excludeBookingId)
+    res.json(result)
   } catch (error) {
     console.error('Error checking availability:', error)
-    res.status(500).json({ error: 'Failed to check availability' })
+    
+    if (error.message === 'Workstation not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to check availability' })
+    }
   }
 })
 
-// POST /bookings/calculate-price - рассчитать стоимость со скидками
 router.post('/calculate-price', async (req, res) => {
+  /* #swagger.summary = 'Рассчитать стоимость со скидками' */
   const { workstationId, bookingDuration, startTime } = req.body;
 
   try {
-    const workstation = await prisma.workstation.findUnique({
-      where: { id: workstationId }
-    });
-
-    if (!workstation) {
-      return res.status(404).json({ error: 'Workstation not found' });
-    }
-
-    let basePrice;
-    
-    if (workstation.type === 'MEETING_ROOM' || workstation.type === 'CONFERENCE_ROOM') {
-      basePrice = workstation.basePricePerHour;
-    } else {
-      switch (bookingDuration) {
-        case 'day': basePrice = workstation.basePricePerDay; break;
-        case 'week': basePrice = workstation.basePricePerWeek; break;
-        case 'month': basePrice = workstation.basePricePerMonth; break;
-        default: basePrice = workstation.basePricePerDay;
-      }
-    }
-
-    if (!basePrice || basePrice <= 0) {
-      console.warn(`Invalid base price for workstation ${workstationId}, using default price`);
-      basePrice = workstation.type === 'MEETING_ROOM' || workstation.type === 'CONFERENCE_ROOM' ? 1000 : 500;
-    }
-
-    const discounts = await prisma.discount.findMany({
-      where: { isActive: true }
-    });
-
-    // Получаем детальную информацию о примененных скидках
-    const result = calculateDiscountWithPriority(basePrice, discounts, new Date(startTime));
-
-    res.json({
-      basePrice: Number(basePrice.toFixed(2)),
-      discountPercentage: result.discountPercentage,
-      discountAmount: result.discountAmount,
-      finalPrice: result.finalPrice,
-      discountsApplied: result.discountsApplied,
-      appliedDiscounts: result.appliedDiscounts, // Добавляем информацию о примененных скидках
-      workstationType: workstation.type
-    });
+    const result = await bookingService.calculatePrice(workstationId, bookingDuration, startTime);
+    res.json(result);
   } catch (error) {
     console.error('Error calculating price:', error);
-    res.status(500).json({ error: 'Failed to calculate price' });
+    
+    if (error.message === 'Workstation not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to calculate price' });
+    }
   }
 });
 
-// GET /bookings/coworking/:coworkingCenterId - получить бронирования для коворкинг-центра
 router.get('/coworking/:coworkingCenterId', async (req, res) => {
+  /* #swagger.summary = 'Получить бронирования для коворкинг-центра' */
   const { coworkingCenterId } = req.params
   const { date } = req.query
 
   try {
-    let whereClause = {
-      coworkingCenterId,
-      status: {
-        in: ['ACTIVE']
-      }
-    }
-
-    if (date) {
-      const startOfDay = new Date(date + 'T00:00:00.000Z')
-      const endOfDay = new Date(date + 'T23:59:59.999Z')
-      
-      whereClause.OR = [
-        {
-          startTime: {
-            lte: endOfDay,
-            gte: startOfDay
-          }
-        },
-        {
-          endTime: {
-            lte: endOfDay,
-            gte: startOfDay
-          }
-        },
-        {
-          AND: [
-            { startTime: { lte: startOfDay } },
-            { endTime: { gte: endOfDay } }
-          ]
-        }
-      ]
-    }
-
-    const bookings = await prisma.booking.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true
-          }
-        },
-        workstation: {
-          select: {
-            id: true,
-            number: true,
-            type: true
-          }
-        },
-        payment: true // Добавляем платеж
-      },
-      orderBy: {
-        startTime: 'asc'
-      }
-    })
-    
+    const bookings = await bookingService.getCoworkingCenterBookings(coworkingCenterId, date)
     res.json(bookings)
   } catch (error) {
     console.error('Error fetching coworking center bookings:', error)
@@ -517,119 +194,18 @@ router.get('/coworking/:coworkingCenterId', async (req, res) => {
   }
 })
 
-// GET /bookings/coworking/:coworkingCenterId/workstation/:workstationId - получить бронирования конкретного рабочего места
 router.get('/coworking/:coworkingCenterId/workstation/:workstationId', async (req, res) => {
+  /* #swagger.summary = 'Получить бронирования конкретного рабочего места' */
   const { coworkingCenterId, workstationId } = req.params
   const { startDate, endDate } = req.query
 
   try {
-    let whereClause = {
-      coworkingCenterId,
-      workstationId,
-      status: 'ACTIVE'
-    }
-
-    if (startDate && endDate) {
-      const start = new Date(startDate + 'T00:00:00.000Z')
-      const end = new Date(endDate + 'T23:59:59.999Z')
-      
-      whereClause.OR = [
-        {
-          startTime: {
-            lte: end,
-            gte: start
-          }
-        },
-        {
-          endTime: {
-            lte: end,
-            gte: start
-          }
-        },
-        {
-          AND: [
-            { startTime: { lte: start } },
-            { endTime: { gte: end } }
-          ]
-        }
-      ]
-    }
-
-    const bookings = await prisma.booking.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        startTime: true,
-        endTime: true,
-        status: true,
-        user: {
-          select: {
-            firstName: true,
-            lastName: true
-          }
-        },
-        payment: true // Добавляем платеж
-      },
-      orderBy: {
-        startTime: 'asc'
-      }
-    })
-    
+    const bookings = await bookingService.getWorkstationBookings(coworkingCenterId, workstationId, startDate, endDate)
     res.json(bookings)
   } catch (error) {
     console.error('Error fetching workstation bookings:', error)
     res.status(500).json({ error: 'Failed to fetch workstation bookings' })
   }
 })
-
-// GET /bookings/admin/all - получить все бронирования (для менеджеров/админов)
-router.get('/admin/all', async (req, res) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.userId }
-    });
-
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    const bookings = await prisma.booking.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            middleName: true
-          }
-        },
-        coworkingCenter: {
-          select: {
-            id: true,
-            address: true
-          }
-        },
-        workstation: {
-          select: {
-            id: true,
-            number: true,
-            type: true,
-            capacity: true
-          }
-        },
-        payment: true // Добавляем платеж
-      },
-      orderBy: {
-        startTime: 'desc'
-      }
-    });
-   
-    res.json(bookings);
-  } catch (error) {
-    console.error('Error fetching all bookings:', error);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
-  }
-});
 
 export default router

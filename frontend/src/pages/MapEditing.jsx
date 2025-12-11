@@ -194,30 +194,30 @@ const MapEditing = () => {
           {/* Основной блок с картой и списком */}
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Карта */}
-<div className="lg:w-2/3 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 h-[600px] relative z-0">
-  <MapContainer
-    center={mapCenter}
-    zoom={13}
-    scrollWheelZoom
-    className="w-full h-full rounded-xl"
-    style={{ zIndex: 0 }}
-  >
-    <TileLayer
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      attribution="&copy; OpenStreetMap contributors"
-    />
-    {filteredSpaces.map(space => (
-      <Marker
-        key={space.id}
-        position={[space.latitude, space.longitude]}
-        icon={customIcon}
-        eventHandlers={{ click: () => setSelectedSpace(space) }}
-      >
-      </Marker>
-    ))}
-    {selectedSpace && <FlyToSelected selectedSpace={selectedSpace} />}
-  </MapContainer>
-</div>
+            <div className="lg:w-2/3 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 h-[600px] relative z-0">
+              <MapContainer
+                center={mapCenter}
+                zoom={13}
+                scrollWheelZoom
+                className="w-full h-full rounded-xl"
+                style={{ zIndex: 0 }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution="&copy; OpenStreetMap contributors"
+                />
+                {filteredSpaces.map(space => (
+                  <Marker
+                    key={space.id}
+                    position={[space.latitude, space.longitude]}
+                    icon={customIcon}
+                    eventHandlers={{ click: () => setSelectedSpace(space) }}
+                  >
+                  </Marker>
+                ))}
+                {selectedSpace && <FlyToSelected selectedSpace={selectedSpace} />}
+              </MapContainer>
+            </div>
 
             {/* Список коворкингов */}
             <div className="lg:w-1/3 flex flex-col h-[600px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">

@@ -1,107 +1,60 @@
 import express from 'express'
-import prisma from '../prismaClient.js'
-import bcrypt from 'bcryptjs'
+import { ProfileService } from '../services/profileService.js'
 
 const router = express.Router()
+const profileService = new ProfileService()
 
-// GET /profile - получить данные пользователя
 router.get('/', async (req, res) => {
+  /* #swagger.summary = 'Получить данные пользователя' */
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.userId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        middleName: true,
-        email: true,
-        role: true
-      }
-    })
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
+    const user = await profileService.getUserProfile(req.userId)
     res.json(user)
   } catch (error) {
     console.error('Error fetching user profile:', error)
-    res.status(500).json({ error: 'Failed to fetch profile' })
+    
+    if (error.message === 'User not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to fetch profile' })
+    }
   }
 })
 
-// PUT /profile - обновить данные пользователя
 router.put('/', async (req, res) => {
+  /* #swagger.summary = 'Обновить данные пользователя' */
   const { firstName, lastName, middleName } = req.body
 
   try {
-    // Проверяем существование пользователя
-    const existingUser = await prisma.user.findUnique({
-      where: { id: req.userId }
-    })
-
-    if (!existingUser) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
-    // Обновляем данные пользователя
-    const updatedUser = await prisma.user.update({
-      where: { id: req.userId },
-      data: {
-        firstName: firstName || existingUser.firstName,
-        lastName: lastName || existingUser.lastName,
-        middleName: middleName || existingUser.middleName
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        middleName: true,
-        email: true,
-        role: true
-      }
-    })
-
+    const updatedUser = await profileService.updateUserProfile(req.userId, { firstName, lastName, middleName })
     res.json(updatedUser)
   } catch (error) {
     console.error('Error updating user profile:', error)
-    res.status(500).json({ error: 'Failed to update profile' })
+    
+    if (error.message === 'User not found') {
+      res.status(404).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to update profile' })
+    }
   }
 })
 
-// PUT /profile/password - изменить пароль
 router.put('/password', async (req, res) => {
+  /* #swagger.summary = 'Изменить пароль' */
   const { currentPassword, newPassword } = req.body
 
   try {
-    // Проверяем существование пользователя
-    const user = await prisma.user.findUnique({
-      where: { id: req.userId }
-    })
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
-    // Проверяем текущий пароль
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password)
-    if (!isCurrentPasswordValid) {
-      return res.status(400).json({ error: 'Current password is incorrect' })
-    }
-
-    // Хешируем новый пароль
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10)
-
-    // Обновляем пароль
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { password: hashedNewPassword }
-    })
-
-    res.json({ message: 'Password updated successfully' })
+    const result = await profileService.updateUserPassword(req.userId, currentPassword, newPassword)
+    res.json(result)
   } catch (error) {
     console.error('Error updating password:', error)
-    res.status(500).json({ error: 'Failed to update password' })
+    
+    if (error.message === 'User not found') {
+      res.status(404).json({ error: error.message })
+    } else if (error.message === 'Current password is incorrect') {
+      res.status(400).json({ error: error.message })
+    } else {
+      res.status(500).json({ error: 'Failed to update password' })
+    }
   }
 })
 
