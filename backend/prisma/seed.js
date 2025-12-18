@@ -40,7 +40,7 @@ async function main() {
   console.log('Creating users...')
   const password = 'password123'
   
-  // Создаем пользователей через AuthService и UserService
+  // Создаем пользователей
   const userData = [
     // Клиенты
     { email: 'ivan@example.com', password, firstName: 'Иван', lastName: 'Иванов', middleName: 'Иванович', role: 'CLIENT' },
@@ -60,7 +60,6 @@ async function main() {
   const createdUsers = []
   for (const user of userData) {
     try {
-      // Для клиентов используем AuthService.register (он генерирует токен)
       if (user.role === 'CLIENT') {
         await authService.register(
           user.email,
@@ -71,7 +70,6 @@ async function main() {
           user.role
         )
       } else {
-        // Для менеджеров и админа используем UserService.createUser
         const createdUser = await userService.createUser(
           user.email,
           user.password,
@@ -270,7 +268,20 @@ async function main() {
   console.log('Creating discounts...')
   const discounts = [
     {
-      name: 'Утренняя скидка',
+      name: 'Ноябрьская скидка',
+      description: 'Скидка для ранних пташек',
+      percentage: 29,
+      maxDiscountAmount: 500,
+      usageLimit: 100,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // через год
+      applicableDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+      applicableHours: '08:00-12:00',
+      isActive: true,
+      priority: 10
+    },
+    {
+      name: 'Декабрьская скидка',
       description: 'Скидка для ранних пташек',
       percentage: 15,
       maxDiscountAmount: 500,
@@ -288,7 +299,7 @@ async function main() {
       percentage: 20,
       maxDiscountAmount: 800,
       usageLimit: null,
-      startDate: new Date(),
+      startDate: '2025-12-15',
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       applicableDays: ['saturday', 'sunday'],
       applicableHours: null,
@@ -453,7 +464,6 @@ async function main() {
   console.log('\nАдминистратор:')
   console.log('- admin@example.com / password123')
 
-  console.log('\n=== ПРОВЕРКА РАБОТОСПОСОБНОСТИ СЕРВИСОВ ===')
   
   // Тестируем сервис пользователей
   const allUsers = await userService.getAllUsers()
@@ -471,8 +481,6 @@ async function main() {
   const inventoryStats = await inventoryService.getInventoryStats()
   console.log(`Всего предметов инвентаря: ${inventoryStats.totalItems}`)
   console.log(`Доступно для бронирования: ${inventoryStats.availableQuantity}`)
-
-  console.log('\nSeed успешно завершен с использованием всех сервисов!')
 }
 
 main()

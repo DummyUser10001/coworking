@@ -13,10 +13,9 @@ export class AuthService {
             throw new Error("User with this email already exists")
         }
 
-        // encrypt the password
         const hashedPassword = bcrypt.hashSync(password, 8)
 
-        // save the new user and hashed password to the db
+        // сохранить нового пользователя и хэшированный пароль
         const user = await prisma.user.create({
             data: {
                 email,

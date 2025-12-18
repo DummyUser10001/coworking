@@ -113,7 +113,7 @@ model InventoryItem {
   reservedQuantity Int           @default(0) // Занятое количество
 
   // Relations
-  workstation Workstation? @relation(fields: [workstationId], references: [id], onDelete: Cascade) // Сделать необязательным
+  workstation Workstation? @relation(fields: [workstationId], references: [id], onDelete: Cascade)
 
   @@map("inventory_items")
 }

@@ -6,11 +6,13 @@
   "scripts": {
     "build-swagger": "node ./swagger-autogen.js",
     "start": "node ./src/server.js",
-    "dev": "node --watch ./src/server.js",
-    "test": "jest"
+    "dev": "node --watch ./src/server.js"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "seed:update": "node updateSeed.js",
+    "seed:delete": "node deleteSeed.js",
+    "seed:clean": "node deleteSeed.js --clean"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +33,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
-    "@babel/preset-env": "^7.28.5",
-    "jest": "^30.2.0"
+    "@babel/preset-env": "^7.28.5"
   }
 }
