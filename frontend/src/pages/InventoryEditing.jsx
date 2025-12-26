@@ -24,6 +24,12 @@ const InventoryEditing = () => {
     totalQuantity: 1
   })
 
+  // Состояния для окна подтверждения
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [confirmMessage, setConfirmMessage] = useState('')
+  const [itemToDelete, setItemToDelete] = useState(null)
+  const [confirmCallback, setConfirmCallback] = useState(null)
+
   const { token, user, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const inventoryTypes = getInventoryTypes()
@@ -65,13 +71,26 @@ const InventoryEditing = () => {
     setShowModal(true)
   }
 
-  const handleDelete = async (itemId) => {
-      try {
-        await deleteInventoryItem(itemId, token)
-        await loadData()
-      } catch (err) {
-        console.error('Error deleting inventory item:', err)
-      }
+  const handleDelete = (itemId) => {
+    // Найдем элемент для отображения его названия в сообщении
+    const item = inventory.find(item => item.id === itemId)
+    if (item) {
+      setConfirmMessage(`Вы уверены, что хотите удалить инвентарь типа "${formatType(item.type)}"?`)
+      setItemToDelete(itemId)
+      
+      // Создаем callback для подтверждения
+      setConfirmCallback(() => async () => {
+        try {
+          await deleteInventoryItem(itemId, token)
+          await loadData()
+        } catch (err) {
+          console.error('Error deleting inventory item:', err)
+          setError('Не удалось удалить инвентарь')
+        }
+      })
+      
+      setShowConfirm(true)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -337,6 +356,50 @@ const InventoryEditing = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Всплывающее окно для подтверждения удаления */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-auto animate-in fade-in zoom-in duration-200">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                Подтверждение удаления
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                {confirmMessage}
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    if (confirmCallback) confirmCallback()
+                    setShowConfirm(false)
+                    setConfirmCallback(null)
+                    setItemToDelete(null)
+                  }}
+                  className="flex-1 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold text-lg transition-all duration-300"
+                >
+                  Да, удалить
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirm(false)
+                    setConfirmCallback(null)
+                    setItemToDelete(null)
+                  }}
+                  className="flex-1 py-4 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-semibold text-lg transition-all duration-300"
+                >
+                  Отмена
+                </button>
+              </div>
             </div>
           </div>
         </div>

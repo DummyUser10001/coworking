@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { 
   getManagers, 
   createUser, 
-  updateUser, 
-  deleteUser,
+  updateUser,
   validateUserData
 } from '../api/users.js'
 import { useAuth } from '../context/AuthContext'
@@ -77,29 +76,6 @@ const ManagerEditing = () => {
     setShowModal(true)
   }
 
-  const handleDelete = async (userId) => {
-    if (window.confirm('Вы уверены, что хотите удалить этого менеджера?')) {
-      try {
-        if (!token) {
-          alert('Требуется авторизация')
-          return
-        }
-
-        // Не позволяем удалить самого себя
-        if (userId === user.id) {
-          alert('Нельзя удалить свой собственный аккаунт')
-          return
-        }
-
-        await deleteUser(userId, token)
-        await loadData()
-      } catch (err) {
-        console.error('Error deleting manager:', err)
-        alert(err.message || 'Не удалось удалить менеджера')
-      }
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -114,13 +90,12 @@ const ManagerEditing = () => {
       return
     }
 
-    // Валидация на клиенте
+    // Валидация на клиенте - для редактирования пароль не проверяем
     const validation = validateUserData({
       ...formData,
-      // Для редактирования пароль не обязателен
-      password: editingUser ? '' : formData.password,
-      role: 'MANAGER' // Всегда MANAGER для этого компонента
-    })
+      password: editingUser ? 'dummyPassword123' : formData.password, // Для валидации при редактировании передаем фиктивный пароль
+      role: 'MANAGER'
+    }, editingUser ? 'EDIT' : 'CREATE') // Указываем режим валидации
     
     if (!validation.isValid) {
       alert('Пожалуйста, исправьте ошибки в форме: ' + Object.values(validation.errors).join(', '))
@@ -133,12 +108,19 @@ const ManagerEditing = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         middleName: formData.middleName || null,
-        role: 'MANAGER' // Всегда создаем/обновляем как менеджера
+        role: 'MANAGER'
       }
 
       // Добавляем пароль только при создании нового пользователя
-      if (!editingUser) {
+      if (!editingUser && formData.password) {
         userData.password = formData.password
+      }
+
+      // Вызов API в зависимости от редактирования или создания
+      if (editingUser) {
+        await updateUser(editingUser.id, userData, token)
+      } else {
+        await createUser(userData, token)
       }
 
       setShowModal(false)
@@ -245,17 +227,6 @@ const ManagerEditing = () => {
                           >
                             Редактировать
                           </button>
-                          <button
-                            onClick={() => handleDelete(manager.id)}
-                            disabled={manager.id === user.id}
-                            className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                              manager.id === user.id
-                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                : 'bg-red-500 hover:bg-red-600 text-white'
-                            }`}
-                          >
-                            Удалить
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -317,14 +288,14 @@ const ManagerEditing = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Отчество
+                    Отчество *
                   </label>
                   <input
                     type="text"
                     value={formData.middleName}
                     onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#645391] focus:border-transparent text-gray-800 dark:text-white"
-                    placeholder="Введите отчество (необязательно)"
+                    placeholder="Введите отчество"
                   />
                 </div>
 
@@ -342,6 +313,7 @@ const ManagerEditing = () => {
                   />
                 </div>
 
+                {/* Поле пароля показываем только при создании нового менеджера */}
                 {!editingUser && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

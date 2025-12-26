@@ -7,8 +7,7 @@ import 'leaflet/dist/leaflet.css'
 import { 
   getAllCoworkingCenters, 
   createCoworkingCenter, 
-  updateCoworkingCenter, 
-  deleteCoworkingCenter 
+  updateCoworkingCenter 
 } from '../api/coworking'
 import CoworkingModal from '../components/map_editing/CoworkingModal'
 import { useAuth } from '../context/AuthContext'
@@ -104,23 +103,6 @@ const MapEditing = () => {
       setSelectedSpace(updatedCenter)
     } catch (err) {
       setError('Ошибка обновления коворкинг-центра: ' + err.message)
-    }
-  }
-
-  // Удаление коворкинг-центра
-  const handleDelete = async (spaceId) => {
-    if (window.confirm('Вы уверены, что хотите удалить этот коворкинг-центр?')) {
-      try {
-        setError(null)
-        await deleteCoworkingCenter(spaceId, token)
-        
-        setCoworkingSpaces(prev => prev.filter(space => space.id !== spaceId))
-        if (selectedSpace?.id === spaceId) {
-          setSelectedSpace(null)
-        }
-      } catch (err) {
-        setError('Ошибка удаления коворкинг-центра: ' + err.message)
-      }
     }
   }
 
@@ -292,16 +274,7 @@ const MapEditing = () => {
                             }}
                             className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-all"
                           >
-                            Редакт.
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(space.id)
-                            }}
-                            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm transition-all"
-                          >
-                            Удалить
+                            Редактировать
                           </button>
                         </div>
                       </div>

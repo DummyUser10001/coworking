@@ -150,7 +150,7 @@ const handleLandmarkSelect = (landmarkType) => {
                   }`}>
                     {tool.label}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-gray-400 dark:text-gray-400">
                     {getWorkstationStats(tool.type)} шт.
                   </span>
                 </div>

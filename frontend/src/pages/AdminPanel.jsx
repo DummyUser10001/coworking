@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getManagers, getClients } from '../api/users'
@@ -14,7 +13,11 @@ const AdminPanel = () => {
     clients: 0,
     bookings: 0,
     coworkingCenters: 0,
-    discounts: 0,
+    discounts: {
+      total: 0,
+      active: 0,
+      inactive: 0
+    },
     inventory: {
       totalItems: 0,
       availableItems: 0,
@@ -40,12 +43,20 @@ const AdminPanel = () => {
           getInventoryStats(token)
         ])
 
+        // Подсчитываем активные скидки
+        const activeDiscounts = discounts.filter(discount => discount.isActive === true).length
+        const inactiveDiscounts = discounts.filter(discount => discount.isActive === false).length
+
         setStats({
           managers: managers.length,
           clients: clients.length,
           bookings: bookings.length,
           coworkingCenters: coworkingCenters.length,
-          discounts: discounts.length,
+          discounts: {
+            total: discounts.length,
+            active: activeDiscounts,
+            inactive: inactiveDiscounts
+          },
           inventory: {
             totalItems: inventoryStats.totalItems || 0,
             availableItems: inventoryStats.availableItems || 0,
@@ -175,13 +186,21 @@ const AdminPanel = () => {
           {/* Скидки */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
             <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-              Активные скидки
+              Статистика скидок
             </h3>
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <span className="text-gray-600 dark:text-gray-300">Всего скидок в системе</span>
-              <span className="text-2xl font-bold text-[#645391] dark:text-[#A1E1DE]">
-                {stats.discounts}
-              </span>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="text-gray-600 dark:text-gray-300">Всего скидок в системе</span>
+                <span className="text-2xl font-bold text-[#645391] dark:text-[#A1E1DE]">
+                  {stats.discounts.total}
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-green-900 rounded-lg">
+                <span className="text-green-600 dark:text-green-300">Активные скидки</span>
+                <span className="text-xl font-bold text-green-600 dark:text-green-300">
+                  {stats.discounts.active}
+                </span>
+              </div>
             </div>
           </div>
 

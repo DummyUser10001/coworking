@@ -42,6 +42,7 @@ const WorkspaceEditing = ({ theme }) => {
   const [roomSelection, setRoomSelection] = useState({ start: null, end: null, selecting: false })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showErrorModal, setShowErrorModal] = useState(false)
   
   const navigate = useNavigate()
   const location = useLocation()
@@ -61,6 +62,16 @@ const WorkspaceEditing = ({ theme }) => {
     }
   }
 
+  const showError = (errorMessage) => {
+    setError(errorMessage)
+    setShowErrorModal(true)
+  }
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false)
+    setError(null)
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -74,6 +85,7 @@ const WorkspaceEditing = ({ theme }) => {
 
         if (!coworkingId) {
           setError('Не выбран коворкинг-центр для редактирования')
+          setShowErrorModal(true)
           setLoading(false)
           return
         }
@@ -95,6 +107,7 @@ const WorkspaceEditing = ({ theme }) => {
         }
       } catch (err) {
         setError('Ошибка загрузки данных: ' + err.message)
+        setShowErrorModal(true)
         console.error('Error fetching data:', err)
       } finally {
         setLoading(false)
@@ -127,12 +140,14 @@ const WorkspaceEditing = ({ theme }) => {
     const width = maxX - minX + 1
     const height = maxY - minY + 1
     if (width < 2 || height < 2) {
+      alert('Комната должна быть минимум 2x2 клетки')
       return false
     }
     
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         if (x < 0 || x >= currentFloor.width || y < 0 || y >= currentFloor.height) {
+          alert('Комната выходит за границы этажа')
           return false
         }
         
@@ -151,6 +166,7 @@ const WorkspaceEditing = ({ theme }) => {
         )
         
         if (existingWorkstation || existingLandmark) {
+          alert('Область пересекается с существующим объектом')
           return false
         }
       }
@@ -187,7 +203,7 @@ const WorkspaceEditing = ({ theme }) => {
       setColors(newColors)
       await updateColorSettings({ workstations: newColors }, token)
     } catch (err) {
-      setError('Ошибка сохранения цвета: ' + err.message)
+      showError('Ошибка сохранения цвета: ' + err.message)
       console.error('Error updating color:', err)
     }
   }
@@ -237,9 +253,9 @@ const WorkspaceEditing = ({ theme }) => {
       updateFloorWorkstations(updatedWorkstations)
     } catch (err) {
       if (err.message.includes('номером уже существует')) {
-        setError('Ошибка: рабочее место с таким номером уже существует')
+        showError('Ошибка: рабочее место с таким номером уже существует')
       } else {
-        setError('Ошибка создания рабочего места: ' + err.message)
+        showError('Ошибка создания рабочего места: ' + err.message)
       }
       console.error('Error creating workstation:', err)
     }
@@ -252,7 +268,7 @@ const WorkspaceEditing = ({ theme }) => {
       updateFloorWorkstations(updatedWorkstations)
       setEditingWorkstation(null)
     } catch (err) {
-      setError('Ошибка удаления рабочего места: ' + err.message)
+      showError('Ошибка удаления рабочего места: место забронировано клиентом')
       console.error('Error deleting workstation:', err)
     }
   }
@@ -269,7 +285,7 @@ const WorkspaceEditing = ({ theme }) => {
       setFloors(prev => [...prev, newFloor])
       setCurrentFloorIndex(floors.length)
     } catch (err) {
-      setError('Ошибка создания этажа: ' + err.message)
+      showError('Ошибка создания этажа: ' + err.message)
       console.error('Error creating floor:', err)
     }
   }
@@ -285,7 +301,7 @@ const WorkspaceEditing = ({ theme }) => {
         const newIndex = Math.min(index, updatedFloors.length - 1)
         setCurrentFloorIndex(newIndex)
       } catch (err) {
-        setError('Ошибка удаления этажа: ' + err.message)
+        showError('Ошибка удаления этажа: ' + err.message)
         console.error('Error deleting floor:', err)
       }
     }
@@ -308,7 +324,7 @@ const WorkspaceEditing = ({ theme }) => {
       updatedFloors[currentFloorIndex] = updatedFloorWithContent
       setFloors(updatedFloors)
     } catch (err) {
-      setError('Ошибка обновления размеров этажа: ' + err.message)
+      showError('Ошибка обновления размеров этажа: ' + err.message)
       console.error('Error updating floor dimensions:', err)
     }
   }
@@ -317,8 +333,6 @@ const WorkspaceEditing = ({ theme }) => {
     if (!currentFloor) return
 
     if (!canPlaceRoom(start.x, start.y, end.x, end.y)) {
-      alert('Невозможно разместить комнату в этой области. Проверьте, что область не пересекается со столами, компьютерами, другими комнатами или ориентирами и имеет минимум 2x2 клетки.')
-      setRoomSelection({ start: null, end: null, selecting: false })
       return
     }
 
@@ -350,9 +364,9 @@ const WorkspaceEditing = ({ theme }) => {
       setRoomSelection({ start: null, end: null, selecting: false })
     } catch (err) {
       if (err.message.includes('номером уже существует')) {
-        setError('Ошибка: рабочее место с таким номером уже существует')
+        showError('Ошибка: рабочее место с таким номером уже существует')
       } else {
-        setError('Ошибка создания комнаты: ' + err.message)
+        showError('Ошибка создания комнаты: ' + err.message)
       }
       console.error('Error creating room:', err)
     }
@@ -403,7 +417,7 @@ const WorkspaceEditing = ({ theme }) => {
       
     } catch (err) {
       console.error('Full error details:', err)
-      setError('Ошибка создания ориентира: ' + err.message)
+      showError('Ошибка создания ориентира: ' + err.message)
     }
   }
 
@@ -414,24 +428,6 @@ const WorkspaceEditing = ({ theme }) => {
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
             Загрузка планировки...
           </h1>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
-            {error}
-          </h1>
-          <button
-            onClick={() => navigate('/map-editing')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Вернуться к списку
-          </button>
         </div>
       </div>
     )
@@ -546,9 +542,9 @@ const WorkspaceEditing = ({ theme }) => {
                 setEditingWorkstation(null)
               } catch (err) {
                 if (err.message.includes('номером уже существует')) {
-                  setError('Ошибка: рабочее место с таким номером уже существует')
+                  showError('Ошибка: рабочее место с таким номером уже существует')
                 } else {
-                  setError('Ошибка сохранения рабочего места: ' + err.message)
+                  showError('Ошибка сохранения рабочего места: ' + err.message)
                 }
                 console.error('Error saving workstation:', err)
               }
@@ -561,7 +557,7 @@ const WorkspaceEditing = ({ theme }) => {
 
         {/* Модальное окно редактирования ориентира */}
         {editingLandmark && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96">
               <h3 className="text-lg font-semibold mb-4">
                 {editingLandmark.type === 'ENTRANCE' 
@@ -638,7 +634,7 @@ const WorkspaceEditing = ({ theme }) => {
                       updateFloorLandmarks(updatedLandmarks)
                       setEditingLandmark(null)
                     } catch (err) {
-                      setError('Ошибка удаления ориентира: ' + err.message)
+                      showError('Ошибка удаления ориентира: ' + err.message)
                       console.error('Error deleting landmark:', err)
                     }
                   }}
@@ -662,7 +658,7 @@ const WorkspaceEditing = ({ theme }) => {
                       updateFloorLandmarks(updatedLandmarks)
                       setEditingLandmark(null)
                     } catch (err) {
-                      setError('Ошибка сохранения ориентира: ' + err.message)
+                      showError('Ошибка сохранения ориентира: ' + err.message)
                       console.error('Error saving landmark:', err)
                     }
                   }}
@@ -670,6 +666,34 @@ const WorkspaceEditing = ({ theme }) => {
                 >
                   Сохранить
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Модальное окно ошибок */}
+        {showErrorModal && error && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-auto animate-in fade-in zoom-in duration-200">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                  Ошибка
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-8">
+                  {error}
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCloseErrorModal}
+                    className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold text-lg transition-all duration-300"
+                  >
+                    Закрыть
+                  </button>
+                </div>
               </div>
             </div>
           </div>

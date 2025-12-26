@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { 
   getAllUsers, 
   createUser, 
-  updateUser, 
-  deleteUser,
+  updateUser,
   validateUserData
 } from '../api/users.js'
 import { useAuth } from '../context/AuthContext'
@@ -79,91 +78,75 @@ const ClientEditing = () => {
     setShowModal(true)
   }
 
-  const handleDelete = async (userId) => {
-    if (window.confirm('Вы уверены, что хотите удалить этого клиента?')) {
-      try {
-        if (!token) {
-          alert('Требуется авторизация')
-          return
-        }
-
-        // Не позволяем удалить самого себя
-        if (userId === user.id) {
-          alert('Нельзя удалить свой собственный аккаунт')
-          return
-        }
-
-        await deleteUser(userId, token)
-        await loadData()
-      } catch (err) {
-        console.error('Error deleting client:', err)
-        alert(err.message || 'Не удалось удалить клиента')
-      }
-    }
-  }
-
   // В функции handleSubmit в ClientEditing.jsx
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  
-  if (!token) {
-    alert('Требуется авторизация')
-    return
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!token) {
+      alert('Требуется авторизация')
+      return
+    }
 
-  if (user?.role !== 'ADMIN') {
-    alert('Доступ запрещен')
-    return
-  }
+    if (user?.role !== 'ADMIN') {
+      alert('Доступ запрещен')
+      return
+    }
 
-  // Валидация на клиенте - передаем объект с id
-  const validationData = {
-    ...formData,
-    role: 'CLIENT'
-  }
-
-  // Добавляем id только если редактируем существующего пользователя
-  if (editingUser) {
-    validationData.id = editingUser.id
-  }
-
-  const validation = validateUserData(validationData)
-  
-  if (!validation.isValid) {
-    alert('Пожалуйста, исправьте ошибки в форме: ' + Object.values(validation.errors).join(', '))
-    return
-  }
-
-  try {
-    const userData = {
-      email: formData.email,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      middleName: formData.middleName || null,
+    // Валидация на клиенте - передаем объект с id
+    const validationData = {
+      ...formData,
       role: 'CLIENT'
     }
 
-    // Добавляем пароль только при создании нового пользователя
-    if (!editingUser) {
-      userData.password = formData.password
+    // Добавляем id только если редактируем существующего пользователя
+    if (editingUser) {
+      validationData.id = editingUser.id
     }
 
-    setShowModal(false)
-    setEditingUser(null)
-    setFormData({
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-      middleName: ''
-    })
+    const validation = validateUserData(validationData)
+    
+    if (!validation.isValid) {
+      alert('Пожалуйста, исправьте ошибки в форме: ' + Object.values(validation.errors).join(', '))
+      return
+    }
 
-    await loadData()
-  } catch (err) {
-    console.error('Error saving client:', err)
-    alert(err.message || 'Не удалось сохранить клиента')
+    try {
+      const userData = {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        middleName: formData.middleName || null,
+        role: 'CLIENT'
+      }
+
+      // Добавляем пароль только при создании нового пользователя
+      if (!editingUser) {
+        userData.password = formData.password
+      }
+
+      // Вызов API в зависимости от редактирования или создания
+      if (editingUser) {
+        await updateUser(editingUser.id, userData, token)
+      } else {
+        await createUser(userData, token)
+      }
+
+      setShowModal(false)
+      setEditingUser(null)
+      setFormData({
+        email: '',
+        password: '',
+        firstName: '',
+        lastName: '',
+        middleName: ''
+      })
+
+      await loadData()
+    } catch (err) {
+      console.error('Error saving client:', err)
+      alert(err.message || 'Не удалось сохранить клиента')
+    }
   }
-}
 
   const getFullName = (user) => {
     return `${user.lastName} ${user.firstName} ${user.middleName || ''}`.trim()
@@ -252,17 +235,7 @@ const handleSubmit = async (e) => {
                           >
                             Редактировать
                           </button>
-                          <button
-                            onClick={() => handleDelete(client.id)}
-                            disabled={client.id === user.id}
-                            className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                              client.id === user.id
-                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                : 'bg-red-500 hover:bg-red-600 text-white'
-                            }`}
-                          >
-                            Удалить
-                          </button>
+                          {/* Кнопка удаления убрана */}
                         </div>
                       </td>
                     </tr>
