@@ -130,6 +130,19 @@ const Info = () => {
               </div>
             </div>
           </div>
+
+          {/* Поддержка */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-8 mt-8 transition-all duration-300">
+            <div className="prose prose-lg dark:prose-invert max-w-none">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+                Поддержка
+              </h2>
+              
+              <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg leading-relaxed">
+                При возникновении проблем или наличии дополнительных вопросов пишите на почту: support@coworking-system.ru.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
