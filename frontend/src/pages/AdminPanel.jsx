@@ -4,7 +4,7 @@ import { getManagers, getClients } from '../api/users'
 import { getAllBookings } from '../api/booking'
 import { getAllCoworkingCenters } from '../api/coworking'
 import { getAllDiscounts } from '../api/discount'
-import { getInventoryStats } from '../api/inventory'
+import { getAllInventory } from '../api/inventory' 
 
 const AdminPanel = () => {
   const { token } = useAuth()
@@ -19,7 +19,8 @@ const AdminPanel = () => {
       inactive: 0
     },
     inventory: {
-      totalItems: 0,
+      totalTypes: 0,        
+      totalUnits: 0,       
       availableItems: 0,
       reservedItems: 0
     }
@@ -33,19 +34,25 @@ const AdminPanel = () => {
         setLoading(true)
         setError(null)
 
-        // Получаем данные параллельно
-        const [managers, clients, bookings, coworkingCenters, discounts, inventoryStats] = await Promise.all([
+        // Загружаем ВЕСЬ инвентарь 
+        const [managers, clients, bookings, coworkingCenters, discounts, inventoryItems] = await Promise.all([
           getManagers(token),
           getClients(token),
           getAllBookings(token),
           getAllCoworkingCenters(token),
           getAllDiscounts(token),
-          getInventoryStats(token)
+          getAllInventory(token) 
         ])
 
-        // Подсчитываем активные скидки
-        const activeDiscounts = discounts.filter(discount => discount.isActive === true).length
-        const inactiveDiscounts = discounts.filter(discount => discount.isActive === false).length
+        // Скидки
+        const activeDiscounts = discounts.filter(d => d.isActive === true).length
+        const inactiveDiscounts = discounts.filter(d => d.isActive === false).length
+
+        // Статистика инвентаря 
+        const totalUnits = inventoryItems.reduce((sum, item) => sum + (item.totalQuantity || 0), 0)
+        const reservedItems = inventoryItems.reduce((sum, item) => sum + (item.reservedQuantity || 0), 0)
+        const availableItems = Math.max(0, totalUnits - reservedItems)
+        const totalTypes = new Set(inventoryItems.map(item => item.type)).size
 
         setStats({
           managers: managers.length,
@@ -58,15 +65,16 @@ const AdminPanel = () => {
             inactive: inactiveDiscounts
           },
           inventory: {
-            totalItems: inventoryStats.totalItems || 0,
-            availableItems: inventoryStats.availableItems || 0,
-            reservedItems: inventoryStats.reservedItems || 0
+            totalTypes,
+            totalUnits,
+            availableItems,
+            reservedItems
           }
         })
 
       } catch (err) {
         console.error('Error fetching admin stats:', err)
-        setError('Ошибка загрузки статистики: ' + err.message)
+        setError('Ошибка загрузки статистики: ' + (err.message || 'неизвестная ошибка'))
       } finally {
         setLoading(false)
       }
@@ -78,7 +86,7 @@ const AdminPanel = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-[#EAB7A1] via-white to-[#A1E1DE] dark:from-gray-900 dark:via-gray-800 dark:to-[#645391] transition-colors duration-300 flex items-center justify-center">
-        <div className="text-white text-xl">Загрузка статистики...</div>
+        <div className="text-gray-800 dark:text-white text-xl font-medium">Загрузка статистики...</div>
       </div>
     )
   }
@@ -204,27 +212,33 @@ const AdminPanel = () => {
             </div>
           </div>
 
-          {/* Инвентарь */}
+          {/* Инвентарь — обновлённая карточка */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
             <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
               Статистика инвентаря
             </h3>
             <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <span className="text-gray-600 dark:text-gray-300">Всего единиц</span>
-                <span className="font-semibold text-gray-800 dark:text-white">
-                  {stats.inventory.totalItems}
+              <div className="flex justify-between items-center p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                <span className="text-indigo-700 dark:text-indigo-300 font-medium">Всего типов инвентаря</span>
+                <span className="font-semibold text-indigo-800 dark:text-indigo-200">
+                  {stats.inventory.totalTypes}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="text-gray-600 dark:text-gray-300">Всего единиц инвентаря</span>
+                <span className="font-semibold text-gray-800 dark:text-white">
+                  {stats.inventory.totalUnits}
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
                 <span className="text-green-600 dark:text-green-300">Доступно</span>
-                <span className="font-semibold text-green-600 dark:text-green-300">
+                <span className="font-semibold text-green-700 dark:text-green-200">
                   {stats.inventory.availableItems}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                 <span className="text-blue-600 dark:text-blue-300">Зарезервировано</span>
-                <span className="font-semibold text-blue-600 dark:text-blue-300">
+                <span className="font-semibold text-blue-700 dark:text-blue-200">
                   {stats.inventory.reservedItems}
                 </span>
               </div>
